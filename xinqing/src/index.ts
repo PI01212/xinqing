@@ -22,7 +22,9 @@ import { safetyCheck, SafetyCheckResult } from './layer3-safety-check.js';
 
 // 导入LLM客户端
 import { createZhipuClient, ZhipuClient } from './llm/zhipu-client.js';
-import { buildChatPrompt } from './llm/xinqing-prompt.js';
+
+// 导入长期记忆和知识库集成服务
+import { createMemoryAndKnowledgeService } from './integration/memory-knowledge-service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,6 +52,9 @@ const userProfiles = new Map<string, UserProfile>();
 // LLM客户端
 const llmClient: ZhipuClient = createZhipuClient();
 const llmAvailable = llmClient.isAvailable();
+
+// 长期记忆和知识库服务
+const memoryKnowledgeService = createMemoryAndKnowledgeService();
 
 /**
  * 消息类型定义
@@ -193,24 +198,39 @@ async function handleMessage(ws: WebSocket, message: Message, connectionId: stri
     } else if (safetyResult.level === 'WARN' || safetyResult.level === 'URGENT') {
       // ⚠️ WARN / 🟠 URGENT：正常回复 + 附加提示
       console.log(`[${safetyResult.level === 'WARN' ? '⚠️ WARN' : '🟠 URGENT'}] 附加安全提示`);
-      
-      // 生成正常的对话回复
-      const chatPrompt = buildChatPrompt(message.text, intentResult, userProfile);
-      const chatResponse = await llmClient.simpleChat(chatPrompt);
-      
+
+      // 生成正常的对话回复（使用增强提示词）
+      const { enhancedPrompt } = await memoryKnowledgeService.buildContext(
+        message.deviceId || connectionId,
+        message.text,
+        intentResult
+      );
+      const chatResponse = await llmClient.simpleChat(enhancedPrompt);
+
       // 合并安全提示
       const extraTip = safetyResult.warningResponse || safetyResult.suggestionResponse;
       finalResponse = `${chatResponse}\n\n───\n\n${extraTip}`;
     } else {
-      // ✅ PASS：正常生成回复
-      console.log(`[✅ PASS] 生成正常回复`);
-      
-      const chatPrompt = buildChatPrompt(message.text, intentResult, userProfile);
-      finalResponse = await llmClient.simpleChat(chatPrompt);
+      // ✅ PASS：正常生成回复（使用增强提示词）
+      console.log(`[✅ PASS] 生成正常回复（增强版）`);
+
+      const { enhancedPrompt } = await memoryKnowledgeService.buildContext(
+        message.deviceId || connectionId,
+        message.text,
+        intentResult
+      );
+      finalResponse = await llmClient.simpleChat(enhancedPrompt);
     }
 
     // 更新用户画像（简化版）
     updateUserProfile(message.deviceId || connectionId, intentResult);
+
+    // 记录到长期记忆
+    await memoryKnowledgeService.processAndRecord(
+      message.deviceId || connectionId,
+      intentResult,
+      message.text
+    );
 
     // 发送最终回复
     sendMessage(ws, {

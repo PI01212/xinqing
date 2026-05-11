@@ -186,7 +186,7 @@ export class EmotionAnalyzer {
     }
 
     // 9.5 危机情绪强制分数调整（自杀意念等必须返回高负分）
-    result = this.adjustScoreForCrisisEmotions(result);
+    this.adjustScoreForCrisisEmotions(result);
 
     // 10. 判断是否需要关注
     result.needsAttention = this.checkNeedsAttention(result);
@@ -445,7 +445,7 @@ export class EmotionAnalyzer {
    * 9.5 危机情绪强制分数调整
    * 自杀意念、自伤等危机情绪必须返回高负分（-8到-10）
    */
-  private adjustScoreForCrisisEmotions(result: EmotionAnalysisResult): EmotionAnalysisResult {
+  private adjustScoreForCrisisEmotions(result: EmotionAnalysisResult): void {
     // 检查是否有危机类别情绪
     const crisisEmotions = result.emotions.filter(e => e.category === 'crisis');
     
@@ -488,8 +488,6 @@ export class EmotionAnalyzer {
       result.score = Math.min(result.score, -5);
       console.log(`[情感分析] ⚠️ 检测到高强度负面情绪 "${severeNegative.name}"，分数调整为: ${result.score}`);
     }
-    
-    return result;
   }
 
   /**

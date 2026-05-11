@@ -1096,6 +1096,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   
   connect();
 
+  document.getElementById('input').addEventListener('keydown',onKey);
+
   // 首次加载时获取仪表盘数据
   setTimeout(() => {
     if (did) {
@@ -1103,9 +1105,15 @@ document.addEventListener('DOMContentLoaded',()=>{
       fetchDashboard();
     }
   }, 1500);
-});
-  document.getElementById('input').addEventListener('keydown',onKey);
-  setTimeout(()=>{anim('wbScore',72);document.getElementById('wbFill').style.width='72%';},400);
+
+  // 初始显示默认值（在数据加载前）
+  setTimeout(()=>{
+    if (!dashboardData) {
+      anim('wbScore', 50);
+      document.getElementById('wbFill').style.width = '50%';
+      document.getElementById('wbDesc').textContent = '发送消息后即可查看统计数据';
+    }
+  }, 400);
 });
 </script>
 

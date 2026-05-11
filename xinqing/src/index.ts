@@ -157,9 +157,30 @@ async function handleMessage(ws: WebSocket, message: Message, connectionId: stri
     
     if (fastResult && fastResult.matched) {
       console.log(`[第一层✅] 命中类型: ${fastResult.type} (无需调用AI)`);
+      
+      // 第一层也需要情感分析（用于前端展示）
+      const layer1Emotion = emotionAnalyzer.analyzeAndRecord(
+        message.deviceId || connectionId,
+        message.text
+      );
+      
+      console.log(`[2.5层✅] 情感分析结果:`);
+      console.log(`  - 极性: ${layer1Emotion.sentiment} (${layer1Emotion.score})`);
+      console.log(`  - 主要情绪: ${layer1Emotion.primaryEmotion}`);
+      console.log(`  - 强度: ${layer1Emotion.intensity}/10`);
+      
       sendMessage(ws, {
         type: 'chat',
         text: fastResult.response,
+        reply: fastResult.response,  // 前端使用
+        emotionAnalysis: {          // 情感分析数据
+          sentiment: layer1Emotion.sentiment,
+          score: layer1Emotion.score,
+          primaryEmotion: layer1Emotion.primaryEmotion,
+          intensity: layer1Emotion.intensity,
+          crisisLevel: layer1Emotion.crisisLevel,
+          needsAttention: layer1Emotion.needsAttention
+        },
         timestamp: Date.now(),
       });
       return;

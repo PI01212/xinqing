@@ -1,1157 +1,886 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>心晴 - 大学生心理健康陪伴助手</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    :root {
-      --primary: #667eea;
-      --primary-light: #f0f4ff;
-      --success: #51cf66;
-      --danger: #ff6b6b;
-      --text: #2d3436;
-      --text-secondary: #636e72;
-      --border: #dfe6e9;
-      --bg: #fafbfc;
-      --shadow: 0 2px 12px rgba(0,0,0,0.08);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      height: 100vh;
-      overflow: hidden;
-      color: var(--text);
-    }
-
-    /* 主容器 */
-    .app {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      max-width: 900px;
-      margin: 0 auto;
-      background: white;
-      box-shadow: var(--shadow);
-    }
-
-    /* ====== 顶部导航栏 ====== */
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 24px;
-      background: white;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .topbar-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .logo {
-      width: 38px;
-      height: 38px;
-      background: linear-gradient(135deg, var(--primary), #764ba2);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-
-    .brand {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .brand-name {
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .brand-desc {
-      font-size: 11px;
-      color: var(--text-secondary);
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--success);
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%,100%{opacity:1} 50%{opacity:.5}
-    }
-
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .icon-btn {
-      width: 36px;
-      height: 36px;
-      border: none;
-      background: transparent;
-      border-radius: 10px;
-      cursor: pointer;
-      color: var(--text-secondary);
-      font-size: 16px;
-      transition: all .2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .icon-btn:hover {
-      background: var(--primary-light);
-      color: var(--primary);
-    }
-
-    /* ====== 消息区域 ====== */
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      background: linear-gradient(180deg, #fafbff 0%, #fff 100%);
-    }
-
-    .messages::-webkit-scrollbar { width: 5px; }
-    .messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
-
-    /* 消息气泡 */
-    .msg {
-      max-width: 75%;
-      animation: up .25s ease;
-    }
-
-    @keyframes up {
-      from{opacity:0;transform:translateY(8px)}
-      to{opacity:1;transform:translateY(0)}
-    }
-
-    .msg.user {
-      align-self: flex-end;
-    }
-
-    .msg.bot {
-      align-self: flex-start;
-    }
-
-    .bubble {
-      padding: 12px 18px;
-      border-radius: 18px;
-      font-size: 15px;
-      line-height: 1.6;
-      word-break: break-word;
-    }
-
-    .msg.user .bubble {
-      background: linear-gradient(135deg, var(--primary), #764ba2);
-      color: white;
-      border-bottom-right-radius: 6px;
-    }
-
-    .msg.bot .bubble {
-      background: white;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-bottom-left-radius: 6px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.04);
-    }
-
-    .time {
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-top: 4px;
-      padding: 0 4px;
-    }
-
-    .msg.user .time { text-align: right; }
-
-    /* 危机消息 */
-    .msg.crisis .bubble {
-      background: linear-gradient(135deg, #ff6b6b, #ee5a52) !important;
-      color: white !important;
-      border-color: #ff4444 !important;
-      box-shadow: 0 4px 20px rgba(255,107,107,.35) !important;
-    }
-
-    /* 打字指示器 */
-    .typing {
-      display: inline-flex;
-      gap: 4px;
-      padding: 14px 18px;
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      border-bottom-left-radius: 6px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.04);
-    }
-
-    .typing span {
-      width: 7px;
-      height: 7px;
-      background: var(--primary);
-      border-radius: 50%;
-      animation: bounce 1.2s infinite;
-    }
-
-    .typing span:nth-child(2){animation-delay:.15s}
-    .typing span:nth-child(3){animation-delay:.3s}
-
-    @keyframes bounce {
-      0%,60%,100%{transform:translateY(0);opacity:.4}
-      30%{transform:translateY(-6px);opacity:1}
-    }
-
-    /* ====== 输入区域 ====== */
-    .input-area {
-      padding: 16px 24px 20px;
-      background: white;
-      border-top: 1px solid var(--border);
-    }
-
-    .input-row {
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-    }
-
-    .input-box {
-      flex: 1;
-      display: flex;
-      align-items: flex-end;
-      background: var(--bg);
-      border: 2px solid var(--border);
-      border-radius: 24px;
-      padding: 6px 16px;
-      transition: all .2s;
-    }
-
-    .input-box:focus-within {
-      border-color: var(--primary);
-      background: white;
-      box-shadow: 0 0 0 3px rgba(102,126,234,.08);
-    }
-
-    #input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      padding: 8px 4px;
-      font-size: 15px;
-      outline: none;
-      resize: none;
-      max-height: 100px;
-      line-height: 1.4;
-      font-family: inherit;
-    }
-
-    #input::placeholder { color: #b2bec3; }
-
-    .send-btn {
-      width: 44px;
-      height: 44px;
-      border: none;
-      background: linear-gradient(135deg, var(--primary), #764ba2);
-      color: white;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 17px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all .2s;
-      box-shadow: 0 4px 12px rgba(102,126,234,.3);
-      flex-shrink: 0;
-    }
-
-    .send-btn:hover:not(:disabled) {
-      transform: scale(1.06);
-      box-shadow: 0 6px 16px rgba(102,126,234,.4);
-    }
-
-    .send-btn:disabled {
-      opacity: .4;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    /* 快捷短语 */
-    .quick-tags {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      overflow-x: auto;
-      padding-bottom: 2px;
-    }
-
-    .quick-tags::-webkit-scrollbar { height: 0; }
-
-    .tag {
-      padding: 7px 14px;
-      background: var(--primary-light);
-      border: 1px solid rgba(102,126,234,.15);
-      border-radius: 20px;
-      font-size: 13px;
-      color: var(--primary);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all .2s;
-      font-weight: 500;
-    }
-
-    .tag:hover {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-
-    /* ====== 侧边抽屉（可选显示）===== */
-    .drawer-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.3);
-      z-index: 99;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .25s;
-    }
-
-    .drawer-overlay.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .drawer {
-      position: fixed;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      width: 340px;
-      background: white;
-      box-shadow: -8px 0 32px rgba(0,0,0,.12);
-      z-index: 100;
-      transform: translateX(100%);
-      transition: transform .3s ease;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-    }
-
-    .drawer.open {
-      transform: translateX(0);
-    }
-
-    .drawer-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .drawer-title {
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    .drawer-close {
-      width: 32px;
-      height: 32px;
-      border: none;
-      background: var(--bg);
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .drawer-body {
-      flex: 1;
-      padding: 20px 24px;
-      overflow-y: auto;
-    }
-
-    /* 幸福感卡片 */
-    .wellbeing {
-      text-align: center;
-      padding: 24px;
-      background: linear-gradient(135deg,#f0f4ff,#eef2ff);
-      border-radius: 16px;
-      margin-bottom: 20px;
-      border: 1px solid rgba(102,126,234,.1);
-    }
-
-    .wellbeing-score {
-      font-size: 42px;
-      font-weight: 800;
-      background: linear-gradient(135deg,var(--primary),#764ba2);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
-    }
-
-    .wellbeing-label {
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-top: 4px;
-    }
-
-    .wellbeing-bar {
-      height: 6px;
-      background: #e0e0e0;
-      border-radius: 3px;
-      margin-top: 14px;
-      overflow: hidden;
-    }
-
-    .wellbeing-fill {
-      height: 100%;
-      background: linear-gradient(90deg,var(--success),var(--primary));
-      border-radius: 3px;
-      transition: width .8s ease;
-    }
-
-    /* 统计网格 */
-    .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .stat {
-      background: var(--bg);
-      border-radius: 12px;
-      padding: 14px;
-      text-align: center;
-    }
-
-    .stat-val {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--primary);
-    }
-
-    .stat-lbl {
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-
-    /* 趋势迷你图 */
-    .mini-chart {
-      background: var(--bg);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-
-    .chart-title {
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 12px;
-    }
-
-    .bars {
-      display: flex;
-      align-items: flex-end;
-      gap: 5px;
-      height: 70px;
-    }
-
-    .bar {
-      flex: 1;
-      background: linear-gradient(to top,var(--primary),#a5b4fc);
-      border-radius: 3px 3px 0 0;
-      min-height: 8px;
-      transition: height .4s;
-    }
-
-    .bar-labels {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 6px;
-      font-size: 9px;
-      color: var(--text-secondary);
-    }
-
-    /* 推荐列表 */
-    .rec-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .rec-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px;
-      background: var(--bg);
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all .2s;
-      border-left: 3px solid transparent;
-    }
-
-    .rec-item:hover {
-      background: white;
-      border-left-color: var(--primary);
-      box-shadow: var(--shadow);
-      transform: translateX(3px);
-    }
-
-    .rec-icon {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg,#f0f4ff,#eef2ff);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 17px;
-      flex-shrink: 0;
-    }
-
-    .rec-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .rec-title {
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .rec-desc {
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌸 心晴 - 大学生心理健康陪伴助手</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            height: 100vh;
+        }
+
+        /* 左侧聊天区域 */
+        .chat-section {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online { background: #4ade80; }
+        .status-offline { background: #ef4444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        #chatMessages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .message.ai .message-bubble {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-top-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-top-right-radius: 4px;
+        }
+
+        .emotion-tag {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+            display: inline-block;
+        }
+
+        .emotion-positive { background: #dcfce7; color: #166534; }
+        .emotion-negative { background: #fee2e2; color: #991b1b; }
+        .emotion-neutral { background: #f1f5f9; color: #475569; }
+        .emotion-crisis { background: #fef3c7; color: #92400e; animation: blink 1s infinite; }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        #userInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #sendButton {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        #sendButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 右侧仪表盘 */
+        .dashboard-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h3 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 当前情绪卡片 */
+        .current-mood {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 16px;
+            color: white;
+        }
+
+        .mood-emoji {
+            font-size: 64px;
+            margin-bottom: 10px;
+        }
+
+        .mood-text {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .mood-score {
+            font-size: 48px;
+            font-weight: bold;
+            opacity: 0.9;
+        }
+
+        .mood-label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        /* 统计数据 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .stat-item {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            position: relative;
+            height: 200px;
+        }
+
+        /* 历史记录列表 */
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-time {
+            color: #9ca3af;
+            font-size: 11px;
+        }
+
+        .history-emotion {
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        /* 加载动画 */
+        .typing-indicator {
+            display: none;
+            padding: 12px 18px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            border-top-left-radius: 4px;
+            width: fit-content;
+        }
+
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-section {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 美化滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <!-- 左侧：聊天区域 -->
+        <div class="chat-section">
+            <div class="chat-header">
+                <h1>🌸 心晴助手</h1>
+                <p>
+                    <span class="status-indicator status-offline" id="connectionStatus"></span>
+                    <span id="statusText">正在连接...</span>
+                </p>
+            </div>
 
-<div class="app">
+            <div id="chatMessages">
+                <div class="message ai">
+                    <div class="message-bubble">
+                        你好！我是心晴，你的心理健康陪伴助手 🌸<br><br>
+                        我可以：<br>
+                        • 💬 和你聊天，倾听你的心声<br>
+                        • 😊 分析你的情绪状态<br>
+                        • 📚 提供专业的心理知识<br>
+                        • 📊 记录和追踪你的心情变化<br><br>
+                        随便和我聊聊吧，我会一直在这里陪着你~
+                    </div>
+                </div>
+            </div>
 
-  <!-- 顶栏 -->
-  <header class="topbar">
-    <div class="topbar-left">
-      <div class="logo">🌸</div>
-      <div class="brand">
-        <span class="brand-name">心晴</span>
-        <span class="brand-desc">大学生心理健康陪伴助手</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
-        <span class="status-dot"></span>
-        <span style="font-size:12px;color:var(--success);font-weight:500" id="connStatus">连接中</span>
-      </div>
-    </div>
-    <div class="topbar-right">
-      <button class="icon-btn" onclick="openDrawer()" title="数据概览">
-        <i class="fas fa-chart-line"></i>
-      </button>
-      <button class="icon-btn" onclick="clearChat()" title="清空对话">
-        <i class="fas fa-trash-alt"></i>
-      </button>
-    </div>
-  </header>
+            <div class="typing-indicator" id="typingIndicator">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            </div>
 
-  <!-- 消息区 -->
-  <div class="messages" id="msgs">
+            <div class="chat-input-area">
+                <input type="text" id="userInput" placeholder="输入你想说的话..." autocomplete="off">
+                <button id="sendButton" onclick="sendMessage()">发送</button>
+            </div>
+        </div>
 
-    <div class="msg bot">
-      <div class="bubble">
-        👋 你好！我是<strong style="color:var(--primary)">心晴</strong>，你的心理健康陪伴助手。<br><br>
-        在这里你可以自由分享心情、倾诉烦恼、学习放松技巧。我会一直在这里倾听你 💙<br><br>
-        <em style="color:var(--text-secondary);font-size:13px">试试点击下方的快捷话题开始对话吧～</em>
-      </div>
-      <div class="time">刚刚</div>
-    </div>
+        <!-- 右侧：情绪仪表盘 -->
+        <div class="dashboard-section">
+            <!-- 当前情绪 -->
+            <div class="card current-mood">
+                <div class="mood-emoji" id="moodEmoji">😊</div>
+                <div class="mood-text" id="moodText">平静</div>
+                <div class="mood-score" id="moodScore">0</div>
+                <div class="mood-label">当前情绪指数</div>
+            </div>
 
-  </div>
+            <!-- 统计概览 -->
+            <div class="card">
+                <h3>📊 今日统计</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalMessages">0</div>
+                        <div class="stat-label">对话次数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="avgScore">0</div>
+                        <div class="stat-label">平均情绪分</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="positiveCount">0</div>
+                        <div class="stat-label">积极时刻</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="crisisCount">0</div>
+                        <div class="stat-label">预警次数</div>
+                    </div>
+                </div>
+            </div>
 
-  <!-- 输入区 -->
-  <div class="input-area">
-    <div class="input-row">
-      <div class="input-box">
-        <textarea id="input" placeholder="分享你的心情..." rows="1" onkeydown="onKey(event)" oninput="resize(this)"></textarea>
-      </div>
-      <button class="send-btn" id="sendBtn" onclick="send()" disabled>
-        <i class="fas fa-paper-plane"></i>
-      </button>
-    </div>
-    <div class="quick-tags">
-      <span class="tag" onclick="quick('最近压力很大')">😰 有压力</span>
-      <span class="tag" onclick="quick('今天心情不错')">😊 心情好</span>
-      <span class="tag" onclick="quick('睡不着很焦虑')">😴 睡眠问题</span>
-      <span class="tag" onclick="quick('教我放松方法')">🧘 放松技巧</span>
-      <span class="tag" onclick="quick('考试焦虑怎么办')">📚 考试焦虑</span>
-      <span class="tag" onclick="quick('人际关系困扰')">🤝 人际关系</span>
-    </div>
-  </div>
+            <!-- 情绪趋势图 -->
+            <div class="card">
+                <h3>📈 近期情绪趋势</h3>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
 
-</div>
+            <!-- 情绪分布图 -->
+            <div class="card">
+                <h3>🎭 情绪分布</h3>
+                <div class="chart-container">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
 
-<!-- 抽屉遮罩 -->
-<div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
-
-<!-- 右侧抽屉 -->
-<div class="drawer" id="drawer">
-  <div class="drawer-header">
-    <span class="drawer-title"><i class="fas fa-chart-line"></i> 数据概览</span>
-    <button class="drawer-close" onclick="closeDrawer()"><i class="fas fa-times"></i></button>
-  </div>
-  <div class="drawer-body">
-
-    <!-- 幸福感评分 -->
-    <div class="wellbeing">
-      <div class="wellbeing-score" id="wbScore">--</div>
-      <div class="wellbeing-label">综合幸福感指数</div>
-      <div style="margin-top:8px;font-size:12px;color:var(--text-secondary)" id="wbDesc">正在加载数据...</div>
-      <div class="wellbeing-bar"><div class="wellbeing-fill" id="wbFill" style="width:0%"></div></div>
-    </div>
-
-    <!-- 当前情绪状态 -->
-    <div id="currentMoodCard" style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:16px;display:none;border-left:4px solid var(--success)">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px"><i class="fas fa-heart-pulse" style="color:var(--primary)"></i> 当前状态</div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary)">
-        <span>主要情绪：<strong id="cmEmotion" style="color:var(--text)">--</strong></span>
-        <span>强度：<strong id="cmIntensity" style="color:var(--text)">--</strong>/10</span>
-      </div>
-      <div id="keywordsDisplay" style="margin-top:8px;display:none"></div>
-    </div>
-
-    <!-- 统计数据 -->
-    <div class="stats">
-      <div class="stat"><div class="stat-val" id="stChats">0</div><div class="stat-lbl">对话次数</div></div>
-      <div class="stat"><div class="stat-val" id="stMood">--</div><div class="stat-lbl">平均心情</div></div>
-      <div class="stat"><div class="stat-val" id="stDays">0</div><div class="stat-lbl">预警次数</div></div>
-      <div class="stat"><div class="stat-val" id="stCrisis">0</div><div class="stat-lbl">关注次数</div></div>
-    </div>
-
-    <!-- 趋势图 + 方向标签 -->
-    <div class="mini-chart">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <span class="chart-title" style="margin:0">近7天情绪趋势</span>
-        <span class="tag" id="trendBadge" style="font-size:11px;padding:4px 10px">加载中</span>
-      </div>
-      <div class="bars" id="bars">
-        <div class="bar" style="height:50%;background:#e0e0e0"></div>
-        <div class="bar" style="height:50%;background:#e0e0e0"></div>
-        <div class="bar" style="height:50%;background:#e0e0e0"></div>
-        <div class="bar" style="height:50%;background:#e0e0e0"></div>
-        <div class="bar" style="height:50%;background:#e0e0e0"></div>
-        <div class="bar" style="height:50%;background:#e0e0e0"></div>
-        <div class="bar" style="height:50%;background:#e0e0e0"></div>
-      </div>
-      <div class="bar-labels" id="barLabels"><span>--</span><span>--</span><span>--</span><span>--</span><span>--</span><span>--</span><span>--</span></div>
+            <!-- 历史记录 -->
+            <div class="card">
+                <h3>📜 最近对话记录</h3>
+                <div class="history-list" id="historyList">
+                    <div style="text-align: center; color: #9ca3af; padding: 20px;">
+                        开始对话后，这里会显示你的情绪记录
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- 情绪分布 -->
-    <div id="distSection" style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:16px;display:none">
-      <div style="font-size:13px;font-weight:600;margin-bottom:10px"><i class="fas fa-chart-pie" style="color:var(--primary)"></i> 情绪分布</div>
-      <div id="distList" style="font-size:12px"></div>
-    </div>
+    <script>
+        // 全局变量
+        let ws = null;
+        let userId = 'web-user-' + Date.now();
+        let emotionData = [];
+        let trendChart = null;
+        let distributionChart = null;
 
-    <!-- 安全状态 -->
-    <div id="safetyCard" style="border-radius:12px;padding:14px;margin-bottom:16px;border-left:4px solid var(--success)">
-      <div style="font-size:13px;font-weight:600;margin-bottom:6px"><i class="fas fa-shield-alt" style="color:var(--success)"></i> 安全评估</div>
-      <div id="safetyText" style="font-size:12px;color:var(--text-secondary)">加载中...</div>
-    </div>
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initWebSocket();
+            initCharts();
+            loadSavedData();
+            
+            // 回车发送
+            document.getElementById('userInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendMessage();
+            });
+        });
 
-    <!-- AI建议（来自后端） -->
-    <div id="recSection" style="display:none">
-      <p style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px">
-        <i class="fas fa-lightbulb" style="color:#fcc419"></i> AI 建议
-      </p>
-      <div id="aiRecList" class="rec-list"></div>
-    </div>
-
-    <!-- 推荐话题（固定） -->
-    <p style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;margin-top:16px">
-      <i class="fas fa-book-open" style="color:var(--primary)"></i> 知识库推荐
-    </p>
-    <div class="rec-list">
-      <div class="rec-item" onclick="quick('教我呼吸放松法')">
-        <div class="rec-icon">🧘</div>
-        <div class="rec-info"><div class="rec-title">呼吸放松练习</div><div class="rec-desc">4-7-8呼吸法快速缓解紧张</div></div>
-      </div>
-      <div class="rec-item" onclick="quick('正念冥想怎么做')">
-        <div class="rec-icon">🧘‍♀️</div>
-        <div class="rec-info"><div class="rec-title">正念冥想入门</div><div class="rec-desc">10分钟找回内心平静</div></div>
-      </div>
-      <div class="rec-item" onclick="quick('如何改善失眠')">
-        <div class="rec-icon">💤</div>
-        <div class="rec-info"><div class="rec-title">睡眠优化指南</div><div class="rec-desc">CBT-I技术科学助眠</div></div>
-      </div>
-      <div class="rec-item" onclick="quick('情绪低落怎么办')">
-        <div class="rec-icon">💙</div>
-        <div class="rec-info"><div class="rec-title">情绪低落支持</div><div class="rec-desc">温暖陪伴与专业引导</div></div>
-      </div>
-      <div class="rec-item" onclick="quick('人际沟通技巧')">
-        <div class="rec-icon">🤝</div>
-        <div class="rec-info"><div class="rec-title">非暴力沟通</div><div class="rec-desc">化解冲突的有效方法</div></div>
-      </div>
-      <div class="rec-item" onclick="quick('考试焦虑怎么办')">
-        <div class="rec-icon">�</div>
-        <div class="rec-info"><div class="rec-title">考试焦虑应对</div><div class="rec-desc">认知重构从容应考</div></div>
-      </div>
-    </div>
-
-    <!-- 数据更新时间 -->
-    <div style="text-align:center;margin-top:16px;font-size:11px;color:#b2bec3" id="lastUpdate">
-      数据更新时间：--
-    </div>
-
-  </div>
-</div>
-
-<script>
-const DK='xinqing-device-id';
-let ws=null,did=null,typing=false,count=0;
-let dashboardData = null;
-
-function getDid(){
-  let d=localStorage.getItem(DK);
-  if(!d){d='xinqing-'+Date.now().toString(36)+'-'+Math.random().toString(36).substr(2,9);localStorage.setItem(DK,d);}
-  return d;
-}
-
-// ==================== API调用 ====================
-const API_BASE = '';
-
-async function apiGet(url) {
-  console.log('[API] 请求:', url);
-  try {
-    const r = await fetch(API_BASE + url);
-    console.log('[API] 响应状态:', r.status);
-    
-    const j = await r.json();
-    console.log('[API] 响应数据:', j);
-    
-    if (j.success === false) {
-      console.warn('[API] 返回失败');
-      return null;
-    }
-    return j.data || j;
-  } catch(e) {
-    console.error('[API] ❌ 请求失败:', url, e.message);
-    return null;
-  }
-}
-
-async function fetchDashboard() {
-  if (!did) {
-    console.warn('[仪表盘] DeviceID为空，跳过');
-    return;
-  }
-  
-  const url = `/api/emotion/dashboard/${did}`;
-  const data = await apiGet(url);
-  
-  if (data) {
-    console.log('[仪表盘] ✅ 数据获取成功，开始渲染');
-    dashboardData = data;
-    renderDashboard(data);
-  } else {
-    console.log('[仪表盘] ⚠️ 暂无数据（可能还没有对话记录）');
-    // 显示"暂无数据"提示
-    document.getElementById('wbScore').textContent = '--';
-    document.getElementById('wbDesc').textContent = '发送消息后即可查看统计数据';
-    document.getElementById('wbFill').style.width = '0%';
-    document.getElementById('lastUpdate').textContent = '暂无数据';
-  }
-}
-
-async function fetchTrend(days=7) {
-  return await apiGet(`/api/emotion/trend/${did}?days=${days}`);
-}
-
-async function fetchReport(period='week') {
-  return await apiGet(`/api/emotion/report/${did}?period=${period}`);
-}
-
-async function fetchDistribution(days=30) {
-  return await apiGet(`/api/emotion/distribution/${did}?days=${days}`);
-}
-
-async function fetchCrisisStats(days=30) {
-  return await apiGet(`/api/emotion/crisis-stats/${did}?days=${days}`);
-}
-
-// ==================== 渲染真实数据 ====================
-function renderDashboard(data) {
-  console.log('[仪表盘] 收到数据:', data);
-
-  // 1. 幸福感评分
-  if (data.wellbeingScore !== undefined) {
-    const score = Math.round(data.wellbeingScore);
-    anim('wbScore', score);
-    document.getElementById('wbFill').style.width = score + '%';
-    
-    let desc = '';
-    if (score >= 80) desc = '状态很好！继续保持 💪';
-    else if (score >= 60) desc = '整体不错，可以更好 🌟';
-    else if (score >= 40) desc = '有些波动，多关注自己 💙';
-    else desc = '建议寻求支持，我在这里陪你';
-    document.getElementById('wbDesc').textContent = desc;
-  }
-
-  // 2. 当前情绪状态（核心！直接用最新分析结果）
-  if (data.currentMood && data.currentMood.primaryEmotion !== '暂无数据') {
-    document.getElementById('currentMoodCard').style.display = 'block';
-    
-    const mood = data.currentMood;
-    
-    // 主要情绪
-    document.getElementById('cmEmotion').textContent = mood.primaryEmotion;
-    
-    // 强度
-    document.getElementById('cmIntensity').textContent = mood.intensity;
-    
-    // 危机级别可视化
-    const card = document.getElementById('currentMoodCard');
-    if (mood.crisisLevel === 'urgent') {
-      card.style.borderLeftColor = '#ff4444';
-      card.style.background = '#fff5f5';
-    } else if (mood.crisisLevel === 'warning') {
-      card.style.borderLeftColor = '#fcc419';
-      card.style.background = '#fffbeb';
-    } else if (mood.crisisLevel === 'concern') {
-      card.style.borderLeftColor = '#74c0fc';
-      card.style.background = '#e7f5ff';
-    } else {
-      card.style.borderLeftColor = '#51cf66';
-      card.style.background = '#f6ffed';
-    }
-    
-    // 显示关键词
-    if (mood.keywords && mood.keywords.length > 0) {
-      const kwEl = document.getElementById('keywordsDisplay');
-      if (kwEl) {
-        kwEl.innerHTML = '<span style="font-size:11px;color:var(--text-secondary)">关键词: </span>' + 
-          mood.keywords.slice(0, 3).map(k => `<span style="background:var(--primary-light);padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px">${k}</span>`).join('');
-        kwEl.style.display = 'block';
-      }
-    }
-    
-    // 对话次数
-    document.getElementById('stChats').textContent = count;
-    
-    // 平均心情表情（基于最新分数）
-    const score = mood.score || 0;
-    document.getElementById('stMood').textContent = score > 2 ? '😊' : score > -2 ? '😐' : '😔';
-
-  } else {
-    // 无数据显示
-    document.getElementById('currentMoodCard').style.display = 'none';
-    document.getElementById('stChats').textContent = count;
-    document.getElementById('stMood').textContent = '--';
-  }
-
-  // 3. 安全状态
-  if (data.safetyStatus) {
-    const safety = data.safetyStatus;
-    document.getElementById('stDays').textContent = safety.recentCrisisCount || 0;
-    document.getElementById('stCrisis').textContent = safety.recentWarnings || 0;
-
-    const card = document.getElementById('safetyCard');
-    const textEl = document.getElementById('safetyText');
-    
-    if (safety.level === 'attention_needed') {
-      card.style.borderLeftColor = '#fcc419';
-      textEl.innerHTML = `<span style="color:#e67700">⚠️ 需要关注</span> - 近期检测到 ${safety.recentWarnings} 次情绪预警，请注意休息和自我关怀`;
-    } else {
-      card.style.borderLeftColor = '#51cf66';
-      textEl.innerHTML = '<span style="color:#2b8a3e">✅ 状态良好</span> - 近期未检测到明显风险信号，继续保持';
-    }
-  }
-
-  // 4. 趋势图 - 使用真实趋势数据
-  if (data.weeklyTrend && data.weeklyTrend.dataPoints && data.weeklyTrend.dataPoints.length > 0) {
-    renderTrendBars(data.weeklyTrend.dataPoints);
-
-    // 趋势方向标签
-    const trendBadge = document.getElementById('trendBadge');
-    if (trendBadge && data.weeklyTrend.trend) {
-      const t = data.weeklyTrend.trend;
-      if (t === 'improving') {
-        trendBadge.textContent = '好转 📈';
-        trendBadge.style.background = '#d3f9d8';
-        trendBadge.style.color = '#2b8a3e';
-      } else if (t === 'declining') {
-        trendBadge.textContent = '下滑 📉';
-        trendBadge.style.background = '#ffe3e3';
-        trendBadge.style.color = '#c92a2a';
-      } else {
-        trendBadge.textContent = '稳定 ➡️';
-        trendBadge.style.background = '#f1f3f5';
-        trendBadge.style.color = '#495057';
-      }
-    }
-  }
-
-  // 5. 情绪分布
-  if (data.emotionDistribution && data.emotionDistribution.length > 0) {
-    document.getElementById('distSection').style.display = 'block';
-    const distList = document.getElementById('distList');
-    const total = data.emotionDistribution.reduce((s, d) => s + d.value, 0) || 1;
-    
-    distList.innerHTML = data.emotionDistribution.slice(0, 6).map(d => {
-      const pct = ((d.value / total) * 100).toFixed(0);
-      return `
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <span style="width:60px;flex-shrink:0">${d.name}</span>
-          <div style="flex:1;height:6px;background:#e9ecef;border-radius:3px;overflow:hidden">
-            <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--primary),#a5b4fc);border-radius:3px"></div>
-          </div>
-          <span style="width:32px;text-align:right;color:var(--text-secondary);flex-shrink:0">${pct}%</span>
-        </div>`;
-    }).join('');
-  }
-
-  // 6. AI建议
-  if (data.recommendations && data.recommendations.length > 0) {
-    document.getElementById('recSection').style.display = 'block';
-    const aiRecList = document.getElementById('aiRecList');
-    
-    aiRecList.innerHTML = data.recommendations.map((rec, i) => `
-      <div class="rec-item" onclick="quick('${rec.replace(/[']/g, '')}')">
-        <div class="rec-icon">${['💡','🎯','🌟','✨'][i] || '💡'}</div>
-        <div class="rec-info"><div class="rec-title">建议 ${i+1}</div><div class="rec-desc">${rec.slice(0,40)}${rec.length>40?'...':''}</div></div>
-      </div>`).join('');
-  }
-
-  // 7. 更新时间
-  if (data.generatedAt) {
-    const d = new Date(data.generatedAt);
-    document.getElementById('lastUpdate').textContent = 
-      `数据更新时间：${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-  }
-}
-
-function renderTrendBars(dataPoints) {
-  const container = document.getElementById('bars');
-  if (!container || !dataPoints || dataPoints.length === 0) return;
-
-  // 找到最大最小值用于归一化
-  let minScore = Infinity, maxScore = -Infinity;
-  dataPoints.forEach(p => {
-    if (p.score < minScore) minScore = p.score;
-    if (p.score > maxScore) maxScore = p.score;
-  });
-  const range = maxScore - minScore || 1;
-
-  container.innerHTML = dataPoints.map((p, i) => {
-    const normalizedHeight = ((p.score - minScore) / range) * 70 + 10; // 10-80px范围
-    return `<div class="bar" style="height:${normalizedHeight}%" title="${p.date}: ${p.score.toFixed(1)}"></div>`;
-  }).join('');
-
-  // 更新日期标签
-  const labelsEl = document.getElementById('barLabels');
-  if (labelsEl && dataPoints.length > 0) {
-    const days = ['日','一','二','三','四','五','六'];
-    labelsEl.innerHTML = dataPoints.map(p => {
-      const d = new Date(p.date);
-      return `<span>${days[d.getDay()]}</span>`;
-    }).join('');
-  }
-}
-
-// ==================== WebSocket连接 ====================
-function connect(){
-  const p=location.protocol==='https:'?'wss:':'ws:';
-  try{
-    ws=new WebSocket(`${p}//${location.host}`);
-    console.log('[WS] 正在连接:', `${p}//${location.host}`);
-    
-    ws.onopen=()=>{
-      console.log('[WS] ✅ 连接成功');
-      document.getElementById('connStatus').textContent='已连接';
-      document.getElementById('sendBtn').disabled=false;
-      document.getElementById('connStatus').style.color='var(--success)';
-    };
-    
-    ws.onmessage=e=>{
-      try{
-        const m=JSON.parse(e.data);
-        console.log('[WS] 收到消息:', m.type, m.text ? m.text.slice(0,50) : '');
-        
-        if(m.type==='chat'&&m.text){
-          removeTyping();
-          addMsg(m.text,'bot',m.timestamp,m.text.includes('🚨')||m.text.includes('危机'));
-          count++;refreshAfterMessage();
-        }else if(m.type==='push_care'){
-          console.log('[WS] 收到推送:', m.content?.slice(0,50));
+        // WebSocket连接
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}`);
+            
+            ws.onopen = function() {
+                updateConnectionStatus(true);
+                addSystemMessage('已连接到心晴助手');
+                
+                // 加载历史数据
+                loadEmotionHistory();
+            };
+            
+            ws.onclose = function() {
+                updateConnectionStatus(false);
+                addSystemMessage('连接断开，尝试重连...');
+                setTimeout(initWebSocket, 3000);
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket错误:', error);
+            };
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
         }
-      }catch(err){
-        console.error('[WS] 消息解析失败:', err);
-      }
-    };
-    
-    ws.onclose=(e)=>{
-      console.log('[WS] ❌ 连接关闭, code:', e.code);
-      document.getElementById('connStatus').textContent='未连接';
-      document.getElementById('connStatus').style.color='var(--danger)';
-      document.getElementById('sendBtn').disabled=true;
-      setTimeout(connect,3000);
-    };
-    
-    ws.onerror=(err)=>{
-      console.error('[WS] ❌ 错误:', err);
-    };
-    
-  }catch(e){
-    console.error('[WS] 创建连接失败:', e);
-    setTimeout(connect,3000);
-  }
-}
 
-function addMsg(text,type,ts,isCrisis=false){
-  const c=document.getElementById('msgs');
-  const d=document.createElement('div');
-  d.className=`msg ${type}${isCrisis?' crisis':''}`;
-  d.innerHTML=`<div class="bubble">${text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div><div class="time">${fmt(ts)}</div>`;
-  c.appendChild(d);
-  c.scrollTop=c.scrollHeight;
-}
+        // 更新连接状态
+        function updateConnectionStatus(connected) {
+            const indicator = document.getElementById('connectionStatus');
+            const text = document.getElementById('statusText');
+            
+            if (connected) {
+                indicator.className = 'status-indicator status-online';
+                text.textContent = '在线';
+            } else {
+                indicator.className = 'status-indicator status-offline';
+                text.textContent = '离线';
+            }
+        }
 
-function showTyping(){
-  if(typing)return;
-  typing=true;
-  const c=document.getElementById('msgs');
-  const d=document.createElement('div');
-  d.className='msg bot';d.id='ti';
-  d.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
-  c.appendChild(d);c.scrollTop=c.scrollHeight;
-}
-function removeTyping(){typing=false;const e=document.getElementById('ti');if(e)e.remove();}
+        // 发送消息
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message || !ws || ws.readyState !== WebSocket.OPEN) return;
+            
+            // 显示用户消息
+            addUserMessage(message);
+            
+            // 发送到服务器
+            ws.send(JSON.stringify({
+                type: 'chat',
+                deviceId: userId,
+                text: message,
+                timestamp: new Date().toISOString()
+            }));
+            
+            input.value = '';
+            
+            // 显示输入指示器
+            document.getElementById('typingIndicator').style.display = 'block';
+            scrollToBottom();
+        }
 
-function send(){
-  const i=document.getElementById('input');
-  const t=i.value.trim();
-  
-  // 调试信息
-  console.log('[发送] 文本:', t);
-  console.log('[发送] WS状态:', ws ? ws.readyState : 'null (未创建)');
-  console.log('[发送] DeviceID:', did);
-  
-  if(!t){console.warn('[发送] 文本为空');return;}
-  if(!ws){console.warn('[发送] WS未创建');return;}
-  if(ws.readyState!==WebSocket.OPEN){
-    console.warn('[发送] WS未打开, 状态:', ws.readyState);
-    alert('连接中，请稍候...');
-    return;
-  }
-  
-  addMsg(t,'user');
-  showTyping();
-  
-  try{
-    ws.send(JSON.stringify({type:'chat',text:t,deviceId:did,timestamp:Date.now()}));
-    console.log('[发送] ✅ 消息已发出');
-  }catch(e){
-    console.error('[发送] 发送失败:', e);
-    removeTyping();
-  }
-  
-  i.value='';i.style.height='auto';
-}
-function quick(t){document.getElementById('input').value=t;send();}
-function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
-function resize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
-function fmt(t){const d=new Date(t);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
-function clearChat(){document.getElementById('msgs').innerHTML='';count=0;addMsg('对话已清空。有什么想聊的随时告诉我～ 😊','bot',Date.now());}
+        // 添加用户消息
+        function addUserMessage(text) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.innerHTML = `
+                <div class="message-bubble">${escapeHtml(text)}</div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            scrollToBottom();
+        }
 
-function openDrawer(){
-  console.log('[抽屉] 打开数据面板');
-  document.getElementById('overlay').classList.add('show');
-  document.getElementById('drawer').classList.add('open');
-  fetchDashboard();
-}
-function closeDrawer(){document.getElementById('overlay').classList.remove('show');document.getElementById('drawer').classList.remove('open');}
+        // 处理服务器消息
+        function handleServerMessage(data) {
+            // 隐藏输入指示器
+            document.getElementById('typingIndicator').style.display = 'none';
+            
+            if (data.type === 'chat' && data.reply) {
+                // 显示AI回复
+                addAIMessage(data.reply);
+                
+                // 如果有情感分析结果
+                if (data.emotionAnalysis) {
+                    updateEmotionDisplay(data.emotionAnalysis);
+                    saveEmotionData(data.emotionAnalysis, data.reply);
+                }
+            } else if (data.type === 'system') {
+                addSystemMessage(data.message);
+            } else if (data.type === 'error') {
+                addErrorMessage(data.error);
+            }
+        }
 
-// ==================== 真实数据更新 ====================
-async function updateStats() {
-  await fetchDashboard();
-}
+        // 添加AI消息
+        function addAIMessage(text, emotionTag = '') {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.innerHTML = `
+                <div class="message-bubble">${formatText(text)} ${emotionTag}</div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            scrollToBottom();
+        }
 
-// 每次发消息后刷新数据
-async function refreshAfterMessage() {
-  document.getElementById('stChats').textContent = count;
-  setTimeout(() => fetchDashboard(), 500);
-}
+        // 添加系统消息
+        function addSystemMessage(text) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai';
+            messageDiv.innerHTML = `
+                <div class="message-bubble" style="background: #f1f5f9; color: #64748b; font-size: 13px;">
+                    ⚙️ ${text}
+                </div>
+            `;
+            messagesDiv.appendChild(messageDiv);
+            scrollToBottom();
+        }
 
-// ==================== 动画工具 ====================
-function anim(id,to){
-  const el=document.getElementById(id);
-  if(!el)return;
-  const from=parseInt(el.textContent)||0;
-  const dur=800;
-  const st=performance.now();
-  function step(now){
-    const p=Math.min((now-st)/dur,1);
-    el.textContent=Math.round(from+(to-from)*p);
-    if(p<1)requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
+        // 更新情绪显示
+        function updateEmotionDisplay(analysis) {
+            // 更新当前情绪卡片
+            const moodEmoji = document.getElementById('moodEmoji');
+            const moodText = document.getElementById('moodText');
+            const moodScore = document.getElementById('moodScore');
+            
+            moodScore.textContent = analysis.score.toFixed(1);
+            
+            // 根据分数设置表情和文字
+            if (analysis.score >= 5) {
+                moodEmoji.textContent = '😄';
+                moodText.textContent = '开心';
+            } else if (analysis.score >= 2) {
+                moodEmoji.textContent = '🙂';
+                moodText.textContent = '平静';
+            } else if (analysis.score >= -2) {
+                moodEmoji.textContent = '😐';
+                moodText.textContent = '一般';
+            } else if (analysis.score >= -5) {
+                moodEmoji.textContent = '😔';
+                moodText.textContent = '低落';
+            } else {
+                moodEmoji.textContent = '😢';
+                moodText.textContent = '难过';
+            }
+            
+            // 危机预警
+            if (analysis.crisisLevel === 'urgent' || analysis.crisisLevel === 'warning') {
+                document.querySelector('.current-mood').style.background = 
+                    'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
+            } else {
+                document.querySelector('.current-mood').style.background = 
+                    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+            }
+            
+            // 更新统计
+            emotionData.push({
+                timestamp: new Date().toISOString(),
+                ...analysis
+            });
+            
+            updateStats();
+            updateCharts();
+            updateHistory();
+            
+            // 保存到本地存储
+            saveToLocalStorage();
+        }
 
-// ==================== 初始化 ====================
-document.addEventListener('DOMContentLoaded',()=>{
-  console.log('╔════════════════════════════════════╗');
-  console.log('║   🌸 心晴 v3.3 - 真实数据版        ║');
-  console.log('╚════════════════════════════════════╝');
-  
-  did=getDid();
-  console.log('[初始化] DeviceID:', did);
-  
-  connect();
+        // 更新统计数据
+        function updateStats() {
+            document.getElementById('totalMessages').textContent = emotionData.length;
+            
+            if (emotionData.length > 0) {
+                const avgScore = emotionData.reduce((sum, e) => sum + e.score, 0) / emotionData.length;
+                document.getElementById('avgScore').textContent = avgScore.toFixed(1);
+                
+                const positiveCount = emotionData.filter(e => e.sentiment === 'positive').length;
+                document.getElementById('positiveCount').textContent = positiveCount;
+                
+                const crisisCount = emotionData.filter(e => 
+                    e.crisisLevel === 'warning' || e.crisisLevel === 'urgent'
+                ).length;
+                document.getElementById('crisisCount').textContent = crisisCount;
+            }
+        }
 
-  document.getElementById('input').addEventListener('keydown',onKey);
+        // 初始化图表
+        function initCharts() {
+            // 趋势图
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '情绪分数',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            min: -10,
+                            max: 10,
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+            
+            // 分布图
+            const distCtx = document.getElementById('distributionChart').getContext('2d');
+            distributionChart = new Chart(distCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['积极', '中性', '消极'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#4ade80', '#94a3b8', '#f87171'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
 
-  // 首次加载时获取仪表盘数据
-  setTimeout(() => {
-    if (did) {
-      console.log('[初始化] 开始获取仪表盘数据...');
-      fetchDashboard();
-    }
-  }, 1500);
+        // 更新图表
+        function updateCharts() {
+            // 更新趋势图（最近20条）
+            const recentData = emotionData.slice(-20);
+            trendChart.data.labels = recentData.map(e => 
+                new Date(e.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+            );
+            trendChart.data.datasets[0].data = recentData.map(e => e.score);
+            trendChart.update();
+            
+            // 更新分布图
+            const positive = emotionData.filter(e => e.sentiment === 'positive').length;
+            const neutral = emotionData.filter(e => e.sentiment === 'neutral').length;
+            const negative = emotionData.filter(e => e.sentiment === 'negative').length;
+            
+            distributionChart.data.datasets[0].data = [
+                Math.max(positive, 0),
+                Math.max(neutral, 0),
+                Math.max(negative, 0)
+            ];
+            distributionChart.update();
+        }
 
-  // 初始显示默认值（在数据加载前）
-  setTimeout(()=>{
-    if (!dashboardData) {
-      anim('wbScore', 50);
-      document.getElementById('wbFill').style.width = '50%';
-      document.getElementById('wbDesc').textContent = '发送消息后即可查看统计数据';
-    }
-  }, 400);
-});
-</script>
+        // 更新历史记录
+        function updateHistory() {
+            const historyList = document.getElementById('historyList');
+            const recentData = emotionData.slice(-10).reverse();
+            
+            if (recentData.length === 0) {
+                historyList.innerHTML = `
+                    <div style="text-align: center; color: #9ca3af; padding: 20px;">
+                        开始对话后，这里会显示你的情绪记录
+                    </div>
+                `;
+                return;
+            }
+            
+            historyList.innerHTML = recentData.map(e => `
+                <div class="history-item">
+                    <div>
+                        <strong>${escapeHtml(e.primaryEmotion || '未知')}</strong>
+                        <div class="history-time">${new Date(e.timestamp).toLocaleString('zh-CN')}</div>
+                    </div>
+                    <span class="history-emotion emotion-${e.sentiment}">
+                        ${e.score > 0 ? '+' : ''}${e.score.toFixed(1)}
+                    </span>
+                </div>
+            `).join('');
+        }
 
+        // 保存到本地存储
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('xinqing_emotion_data', JSON.stringify(emotionData));
+                localStorage.setItem('xinqing_user_id', userId);
+            } catch (e) {
+                console.warn('无法保存到本地存储:', e);
+            }
+        }
+
+        // 从本地存储加载
+        function loadSavedData() {
+            try {
+                const savedData = localStorage.getItem('xinqing_emotion_data');
+                const savedUserId = localStorage.getItem('xinqing_user_id');
+                
+                if (savedUserId) {
+                    userId = savedUserId;
+                }
+                
+                if (savedData) {
+                    emotionData = JSON.parse(savedData);
+                    updateStats();
+                    updateCharts();
+                    updateHistory();
+                    
+                    // 更新最新情绪显示
+                    if (emotionData.length > 0) {
+                        const latest = emotionData[emotionData.length - 1];
+                        updateEmotionDisplay(latest);
+                    }
+                }
+            } catch (e) {
+                console.warn('无法从本地存储加载:', e);
+            }
+        }
+
+        // 从服务器加载历史数据
+        async function loadEmotionHistory() {
+            try {
+                const response = await fetch(`/api/emotion/history/${userId}?limit=50`);
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    emotionData = result.data.map(d => ({
+                        timestamp: d.timestamp,
+                        sentiment: d.sentiment,
+                        score: d.score,
+                        primaryEmotion: d.primaryEmotion,
+                        intensity: d.intensity,
+                        crisisLevel: d.crisisLevel
+                    }));
+                    
+                    updateStats();
+                    updateCharts();
+                    updateHistory();
+                    saveToLocalStorage();
+                }
+            } catch (e) {
+                console.warn('无法加载历史数据:', e);
+            }
+        }
+
+        // 保存情绪数据到服务器
+        async function saveEmotionData(analysis, reply) {
+            // 这里可以添加API调用将数据持久化到服务器
+            // 目前先使用本地存储
+        }
+
+        // 工具函数
+        function scrollToBottom() {
+            const container = document.getElementById('chatMessages');
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 100);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatText(text) {
+            return escapeHtml(text).replace(/\n/g, '<br>');
+        }
+    </script>
 </body>
 </html>

@@ -272,10 +272,19 @@ async function handleMessage(ws: WebSocket, message: Message, connectionId: stri
       message.text
     );
 
-    // 发送最终回复
+    // 发送最终回复（包含情感分析结果）
     sendMessage(ws, {
       type: 'chat',
       text: finalResponse,
+      reply: finalResponse,  // 前端使用
+      emotionAnalysis: {      // 情感分析数据（前端用于显示）
+        sentiment: emotionAnalysis.sentiment,
+        score: emotionAnalysis.score,
+        primaryEmotion: emotionAnalysis.primaryEmotion,
+        intensity: emotionAnalysis.intensity,
+        crisisLevel: emotionAnalysis.crisisLevel,
+        needsAttention: emotionAnalysis.needsAttention
+      },
       timestamp: Date.now(),
     });
 
@@ -351,6 +360,20 @@ app.get('/health', (req, res) => {
 // 注册情绪可视化API路由
 app.use(emotionVisualization.getRouter());
 
+// 静态文件服务（提供前端页面）
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(express.static(path.join(__dirname, '../public')));
+
+// 根路径重定向到index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 // 启动服务器
 server.listen(PORT, () => {
   console.log('');
@@ -385,11 +408,11 @@ server.listen(PORT, () => {
   console.log('║  ✅ 主动服务模块（定时关怀推送）                   ║');
   console.log('║  ✅ 情绪可视化API（趋势图表数据接口）              ║');
   console.log('╠══════════════════════════════════════════════════╣');
+  console.log(`║  🌐 前端页面: http://localhost:${portStr}`.padEnd(47) + '║');
   console.log('║  API端点：                                         ║');
-  console.log(`║  健康检查:   http://localhost:${portStr}/health`.padEnd(47) + '║');
-  console.log(`║  情绪趋势:   http://localhost:${portStr}/api/emotion/trend/:userId`.padEnd(47) + '║');
-  console.log(`║  情绪报告:   http://localhost:${portStr}/api/emotion/report/:userId`.padEnd(47) + '║');
-  console.log(`║  数据仪表盘: http://localhost:${portStr}/api/emotion/dashboard/:userId`.padEnd(47) + '║');
+  console.log(`║    健康检查:   /health`.padEnd(47) + '║');
+  console.log(`║    情绪趋势:   /api/emotion/trend/:userId`.padEnd(47) + '║');
+  console.log(`║    数据仪表盘: /api/emotion/dashboard/:userId`.padEnd(47) + '║');
   console.log('╚══════════════════════════════════════════════════╝');
   console.log('');
 });

@@ -627,23 +627,37 @@
             scrollToBottom();
         }
 
-        // 更新情绪显示
+        // 更新情绪显示（新消息时调用）
         function updateEmotionDisplay(analysis) {
-            console.log('[情绪更新] 📊 更新情绪显示:', {
+            console.log('[情绪更新] 📊 新消息 - 更新情绪显示:', {
                 sentiment: analysis.sentiment,
                 score: analysis.score,
                 emotion: analysis.primaryEmotion,
                 crisisLevel: analysis.crisisLevel
             });
             
-            // 更新当前情绪卡片
+            updateMoodCard(analysis);
+            
+            // 新消息：添加到数组并保存
+            emotionData.push({
+                timestamp: new Date().toISOString(),
+                ...analysis
+            });
+            
+            updateStats();
+            updateCharts();
+            updateHistory();
+            saveToLocalStorage();
+        }
+        
+        // 仅更新情绪卡片UI（历史数据恢复时调用，不会重复添加数据）
+        function updateMoodCard(analysis) {
             const moodEmoji = document.getElementById('moodEmoji');
             const moodText = document.getElementById('moodText');
             const moodScore = document.getElementById('moodScore');
             
-            moodScore.textContent = analysis.score.toFixed(1);
+            moodScore.textContent = (analysis.score || 0).toFixed(1);
             
-            // 根据分数设置表情和文字
             if (analysis.score >= 5) {
                 moodEmoji.textContent = '😄';
                 moodText.textContent = '开心';
@@ -661,7 +675,6 @@
                 moodText.textContent = '难过';
             }
             
-            // 危机预警
             if (analysis.crisisLevel === 'urgent' || analysis.crisisLevel === 'warning') {
                 document.querySelector('.current-mood').style.background = 
                     'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)';
@@ -669,19 +682,6 @@
                 document.querySelector('.current-mood').style.background = 
                     'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
             }
-            
-            // 更新统计
-            emotionData.push({
-                timestamp: new Date().toISOString(),
-                ...analysis
-            });
-            
-            updateStats();
-            updateCharts();
-            updateHistory();
-            
-            // 保存到本地存储
-            saveToLocalStorage();
         }
 
         // 更新统计数据
@@ -846,10 +846,10 @@
                     updateCharts();
                     updateHistory();
                     
-                    // 更新最新情绪显示
+                    // 更新最新情绪显示（仅更新UI，不重复添加数据）
                     if (emotionData.length > 0) {
                         const latest = emotionData[emotionData.length - 1];
-                        updateEmotionDisplay(latest);
+                        updateMoodCard(latest);
                         console.log('[本地存储] 最新情绪:', latest.primaryEmotion, latest.score);
                     }
                 } else {
@@ -893,10 +893,10 @@
                     updateHistory();
                     saveToLocalStorage();  // 同步到localStorage
                     
-                    // 更新最新情绪显示
+                    // 更新最新情绪显示（仅更新UI，不重复添加数据）
                     if (emotionData.length > 0) {
                         const latest = emotionData[emotionData.length - 1];
-                        updateEmotionDisplay(latest);
+                        updateMoodCard(latest);
                     }
                 } else {
                     console.log('[服务器API] ℹ️ 服务器没有历史数据（可能是新用户）');

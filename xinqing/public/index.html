@@ -478,9 +478,10 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            initWebSocket();
             initCharts();
-            loadSavedData();
+            loadSavedData();  // 第一步：先从localStorage快速加载（立即显示）
+            initWebSocket();   // 第二步：连接WebSocket，连接成功后再从服务器同步
+            console.log('[初始化] userId:', userId);
             
             // 回车发送
             document.getElementById('userInput').addEventListener('keypress', function(e) {
@@ -628,6 +629,13 @@
 
         // 更新情绪显示
         function updateEmotionDisplay(analysis) {
+            console.log('[情绪更新] 📊 更新情绪显示:', {
+                sentiment: analysis.sentiment,
+                score: analysis.score,
+                emotion: analysis.primaryEmotion,
+                crisisLevel: analysis.crisisLevel
+            });
+            
             // 更新当前情绪卡片
             const moodEmoji = document.getElementById('moodEmoji');
             const moodText = document.getElementById('moodText');
@@ -811,12 +819,13 @@
             try {
                 localStorage.setItem('xinqing_emotion_data', JSON.stringify(emotionData));
                 localStorage.setItem('xinqing_user_id', userId);
+                console.log(`[本地存储] 💾 已保存 ${emotionData.length} 条记录到localStorage`);
             } catch (e) {
-                console.warn('无法保存到本地存储:', e);
+                console.warn('[本地存储] ❌ 保存失败:', e);
             }
         }
 
-        // 从本地存储加载
+        // 从本地存储加载（快速显示）
         function loadSavedData() {
             try {
                 const savedData = localStorage.getItem('xinqing_emotion_data');
@@ -824,10 +833,15 @@
                 
                 if (savedUserId) {
                     userId = savedUserId;
+                    console.log('[本地存储] ✅ 恢复用户ID:', userId);
+                } else {
+                    console.log('[本地存储] ℹ️ 未找到用户ID，将生成新的');
                 }
                 
                 if (savedData) {
                     emotionData = JSON.parse(savedData);
+                    console.log(`[本地存储] ✅ 从localStorage加载 ${emotionData.length} 条记录`);
+                    
                     updateStats();
                     updateCharts();
                     updateHistory();
@@ -836,20 +850,33 @@
                     if (emotionData.length > 0) {
                         const latest = emotionData[emotionData.length - 1];
                         updateEmotionDisplay(latest);
+                        console.log('[本地存储] 最新情绪:', latest.primaryEmotion, latest.score);
                     }
+                } else {
+                    console.log('[本地存储] ℹ️ localStorage中没有数据');
                 }
             } catch (e) {
-                console.warn('无法从本地存储加载:', e);
+                console.warn('[本地存储] ❌ 加载失败:', e);
             }
         }
 
-        // 从服务器加载历史数据
+        // 从服务器加载历史数据（WebSocket连接后执行，更完整的数据）
         async function loadEmotionHistory() {
             try {
-                const response = await fetch(`/api/emotion/history/${userId}?limit=50`);
+                console.log('[服务器API] 📡 正在从服务器加载历史数据...');
+                console.log('[服务器API] 用户ID:', userId);
+                
+                const response = await fetch(`/api/emotion/history/${userId}?limit=100`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const result = await response.json();
                 
-                if (result.success && result.data) {
+                console.log('[服务器API] 📦 收到响应:', result.success ? '成功' : '失败', '数据量:', result.data?.length || 0);
+                
+                if (result.success && result.data && result.data.length > 0) {
                     emotionData = result.data.map(d => ({
                         timestamp: d.timestamp,
                         sentiment: d.sentiment,
@@ -859,13 +886,24 @@
                         crisisLevel: d.crisisLevel
                     }));
                     
+                    console.log(`[服务器API] ✅ 成功加载 ${emotionData.length} 条记录`);
+                    
                     updateStats();
                     updateCharts();
                     updateHistory();
-                    saveToLocalStorage();
+                    saveToLocalStorage();  // 同步到localStorage
+                    
+                    // 更新最新情绪显示
+                    if (emotionData.length > 0) {
+                        const latest = emotionData[emotionData.length - 1];
+                        updateEmotionDisplay(latest);
+                    }
+                } else {
+                    console.log('[服务器API] ℹ️ 服务器没有历史数据（可能是新用户）');
                 }
             } catch (e) {
-                console.warn('无法加载历史数据:', e);
+                console.error('[服务器API] ❌ 加载失败:', e.message);
+                console.error('[服务器API] 将使用localStorage中的数据（如果有）');
             }
         }
 

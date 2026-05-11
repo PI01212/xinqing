@@ -35,6 +35,9 @@ import { createProactiveService } from './proactive/proactive-service.js';
 // 导入情绪可视化服务
 import { createEmotionVisualizationService } from './visualization/emotion-visualization.js';
 
+// 导入数据持久化服务
+import { createDataPersistenceService } from './data/data-persistence.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -71,8 +74,11 @@ const emotionAnalyzer = createEmotionAnalyzer();
 // 主动服务模块
 const proactiveService = createProactiveService();
 
-// 情绪可视化服务
-const emotionVisualization = createEmotionVisualizationService();
+// 情绪可视化服务（传入持久化服务，确保数据从文件读取）
+const emotionVisualization = createEmotionVisualizationService(persistenceService);
+
+// 数据持久化服务（用于保存情绪数据到文件）
+const persistenceService = createDataPersistenceService();
 
 /**
  * 消息类型定义
@@ -164,6 +170,13 @@ async function handleMessage(ws: WebSocket, message: Message, connectionId: stri
         message.text
       );
       
+      // 保存到文件（持久化）
+      persistenceService.saveEmotionRecord(
+        message.deviceId || connectionId,
+        message.text,
+        layer1Emotion
+      ).catch(err => console.error('[持久化] 保存失败:', err));
+      
       console.log(`[2.5层✅] 情感分析结果:`);
       console.log(`  - 极性: ${layer1Emotion.sentiment} (${layer1Emotion.score})`);
       console.log(`  - 主要情绪: ${layer1Emotion.primaryEmotion}`);
@@ -225,6 +238,13 @@ async function handleMessage(ws: WebSocket, message: Message, connectionId: stri
       message.deviceId || connectionId,
       message.text
     );
+
+    // 保存到文件（持久化）- 确保数据不会丢失
+    persistenceService.saveEmotionRecord(
+      message.deviceId || connectionId,
+      message.text,
+      emotionAnalysis
+    ).catch(err => console.error('[持久化] 保存失败:', err));
 
     console.log(`[2.5层✅] 情感分析结果:`);
     console.log(`  - 极性: ${emotionAnalysis.sentiment} (${emotionAnalysis.score})`);

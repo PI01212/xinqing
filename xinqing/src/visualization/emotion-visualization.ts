@@ -8,6 +8,7 @@
  */
 
 import { EmotionAnalyzer, EmotionAnalysisResult, createEmotionAnalyzer } from '../emotion/emotion-analyzer.js';
+import { DataPersistenceService, createDataPersistenceService } from '../data/data-persistence.js';
 import express from 'express';
 
 export interface EmotionReport {
@@ -36,10 +37,12 @@ export interface EmotionReport {
 
 export class EmotionVisualizationService {
   private emotionAnalyzer: EmotionAnalyzer;
+  private persistenceService: DataPersistenceService | null;
   private router: express.Router;
 
-  constructor() {
+  constructor(persistenceService?: DataPersistenceService) {
     this.emotionAnalyzer = createEmotionAnalyzer();
+    this.persistenceService = persistenceService || null;
     this.router = express.Router();
     this.initializeRoutes();
   }
@@ -55,13 +58,24 @@ export class EmotionVisualizationService {
    * 初始化API路由
    */
   private initializeRoutes(): void {
-    // 获取情绪趋势数据（用于折线图）
+    // 获取情绪趋势数据（用于折线图）- 优先从持久化文件读取
     this.router.get('/api/emotion/trend/:userId', async (req, res) => {
       try {
         const { userId } = req.params;
         const days = parseInt(req.query.days as string) || 7;
 
-        const trend = this.emotionAnalyzer.getEmotionTrend(userId, days);
+        let trend;
+
+        // 优先从持久化服务读取
+        if (this.persistenceService) {
+          const history = await this.persistenceService.getEmotionHistory(userId, 500);
+          trend = this.calculateTrendFromHistory(history, days);
+          console.log(`[情绪API] 📂 从文件计算 ${userId} 的趋势`);
+        } else {
+          // 回退到内存数据
+          trend = this.emotionAnalyzer.getEmotionTrend(userId, days);
+          console.log(`[情绪API] 💾 从内存获取 ${userId} 的趋势`);
+        }
 
         res.json({
           success: true,
@@ -77,13 +91,23 @@ export class EmotionVisualizationService {
       }
     });
 
-    // 获取情绪历史记录
+    // 获取情绪历史记录（优先从持久化文件读取）
     this.router.get('/api/emotion/history/:userId', async (req, res) => {
       try {
         const { userId } = req.params;
         const limit = parseInt(req.query.limit as string) || 50;
 
-        const history = this.emotionAnalyzer.getHistory(userId, limit);
+        let history;
+
+        // 优先从持久化服务读取（文件数据，重启不丢失）
+        if (this.persistenceService) {
+          history = await this.persistenceService.getEmotionHistory(userId, limit);
+          console.log(`[情绪API] 📂 从文件加载 ${userId} 的历史记录: ${history.length}条`);
+        } else {
+          // 回退到内存数据
+          history = this.emotionAnalyzer.getHistory(userId, limit);
+          console.log(`[情绪API] 💾 从内存加载 ${userId} 的历史记录: ${history.length}条`);
+        }
 
         res.json({
           success: true,
@@ -244,30 +268,16 @@ export class EmotionVisualizationService {
           (crisisStats.crisisCount === 0 ? 20 : Math.max(0, 20 - crisisStats.crisisCount * 5)) // 安全加分 (0-20分)
         ));
 
-        // 获取最新单条分析结果（用于实时当前状态）
-        const latestHistory = this.emotionAnalyzer.getHistory(userId, 1);
-        const latestAnalysis = latestHistory.length > 0 ? latestHistory[latestHistory.length - 1].analysis : null;
-
         res.json({
           success: true,
           data: {
-            // 当前情绪状态 - 使用最新单条分析结果（实时）
-            currentMood: latestAnalysis ? {
-              score: Math.round(latestAnalysis.score * 100) / 100,
-              sentiment: latestAnalysis.sentiment,
-              primaryEmotion: latestAnalysis.primaryEmotion || '平静',
-              intensity: Math.round(latestAnalysis.intensity * 10) / 10,
-              crisisLevel: latestAnalysis.crisisLevel,
-              needsAttention: latestAnalysis.needsAttention,
-              keywords: latestAnalysis.keywords
-            } : {
-              score: 0,
-              sentiment: 'neutral',
-              primaryEmotion: '暂无数据',
-              intensity: 0,
-              crisisLevel: 'safe',
-              needsAttention: false,
-              keywords: []
+            currentMood: {
+              score: trend.dataPoints.length > 0 ? trend.dataPoints[trend.dataPoints.length - 1].score : 0,
+              sentiment: trend.dataPoints.length > 0 ? 
+                (trend.dataPoints[trend.dataPoints.length - 1].score > 0.5 ? 'positive' : 
+                 trend.dataPoints[trend.dataPoints.length - 1].score < -0.5 ? 'negative' : 'neutral') : 'neutral',
+              primaryEmotion: trend.dominantEmotions[0] || '平静',
+              intensity: trend.averageIntensity
             },
             weeklyTrend: {
               direction: trend.trend,
@@ -409,6 +419,111 @@ export class EmotionVisualizationService {
         '开始和我聊天吧！我会帮你记录和分析你的情绪变化。',
         '多分享你的感受，这样我才能更好地帮助你。'
       ]
+    };
+  }
+
+  /**
+   * 从持久化的历史数据计算趋势
+   */
+  private calculateTrendFromHistory(
+    history: Array<{ timestamp: string; analysis: EmotionAnalysisResult }>,
+    days: number
+  ): {
+    trend: 'improving' | 'declining' | 'stable';
+    averageScore: number;
+    averageIntensity: number;
+    dominantEmotions: string[];
+    crisisCount: number;
+    dataPoints: Array<{ date: string; score: number; intensity: number }>;
+  } {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    // 过滤指定天数内的数据
+    const recentEntries = history.filter(entry =>
+      new Date(entry.timestamp) >= cutoffDate
+    );
+
+    if (recentEntries.length === 0) {
+      return {
+        trend: 'stable',
+        averageScore: 0,
+        averageIntensity: 0,
+        dominantEmotions: [],
+        crisisCount: 0,
+        dataPoints: []
+      };
+    }
+
+    // 计算平均分
+    const totalScore = recentEntries.reduce((sum, entry) => sum + entry.analysis.score, 0);
+    const averageScore = totalScore / recentEntries.length;
+
+    // 计算平均强度
+    const totalIntensity = recentEntries.reduce((sum, entry) => sum + entry.analysis.intensity, 0);
+    const averageIntensity = totalIntensity / recentEntries.length;
+
+    // 统计主导情绪
+    const emotionCounts: Record<string, number> = {};
+    recentEntries.forEach(entry => {
+      const emotion = entry.analysis.primaryEmotion || '未知';
+      emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+    });
+    const dominantEmotions = Object.entries(emotionCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([emotion]) => emotion);
+
+    // 统计危机次数
+    const crisisCount = recentEntries.filter(entry =>
+      entry.analysis.crisisLevel === 'warning' || entry.analysis.crisisLevel === 'urgent'
+    ).length;
+
+    // 判断趋势
+    const halfPoint = Math.floor(recentEntries.length / 2);
+    const firstHalf = recentEntries.slice(0, halfPoint);
+    const secondHalf = recentEntries.slice(halfPoint);
+
+    const firstHalfAvg = firstHalf.length > 0
+      ? firstHalf.reduce((sum, e) => sum + e.analysis.score, 0) / firstHalf.length
+      : 0;
+    const secondHalfAvg = secondHalf.length > 0
+      ? secondHalf.reduce((sum, e) => sum + e.analysis.score, 0) / secondHalf.length
+      : 0;
+
+    let trend: 'improving' | 'declining' | 'stable' = 'stable';
+    if (secondHalfAvg - firstHalfAvg > 1) {
+      trend = 'improving';
+    } else if (firstHalfAvg - secondHalfAvg > 1) {
+      trend = 'declining';
+    }
+
+    // 生成数据点（按天聚合）
+    const dailyData: Record<string, { scores: number[]; intensities: number[] }> = {};
+    recentEntries.forEach(entry => {
+      const date = entry.timestamp.split('T')[0];
+      if (!dailyData[date]) {
+        dailyData[date] = { scores: [], intensities: [] };
+      }
+      dailyData[date].scores.push(entry.analysis.score);
+      dailyData[date].intensities.push(entry.analysis.intensity);
+    });
+
+    const dataPoints = Object.entries(dailyData)
+      .map(([date, data]) => ({
+        date,
+        score: data.scores.reduce((a, b) => a + b, 0) / data.scores.length,
+        intensity: data.intensities.reduce((a, b) => a + b, 0) / data.intensities.length
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    return {
+      trend,
+      averageScore: Math.round(averageScore * 100) / 100,
+      averageIntensity: Math.round(averageIntensity * 100) / 100,
+      dominantEmotions,
+      crisisCount,
+      dataPoints
     };
   }
 

@@ -26,6 +26,15 @@ import { createZhipuClient, ZhipuClient } from './llm/zhipu-client.js';
 // 导入长期记忆和知识库集成服务
 import { createMemoryAndKnowledgeService } from './integration/memory-knowledge-service.js';
 
+// 导入情感分析引擎
+import { createEmotionAnalyzer, EmotionAnalysisResult } from './emotion/emotion-analyzer.js';
+
+// 导入主动服务模块
+import { createProactiveService } from './proactive/proactive-service.js';
+
+// 导入情绪可视化服务
+import { createEmotionVisualizationService } from './visualization/emotion-visualization.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -55,6 +64,15 @@ const llmAvailable = llmClient.isAvailable();
 
 // 长期记忆和知识库服务
 const memoryKnowledgeService = createMemoryAndKnowledgeService();
+
+// 情感分析引擎
+const emotionAnalyzer = createEmotionAnalyzer();
+
+// 主动服务模块
+const proactiveService = createProactiveService();
+
+// 情绪可视化服务
+const emotionVisualization = createEmotionVisualizationService();
 
 /**
  * 消息类型定义
@@ -178,6 +196,28 @@ async function handleMessage(ws: WebSocket, message: Message, connectionId: stri
     console.log(`  - 意图: ${intentResult.intent}/${intentResult.subIntent}`);
     console.log(`  - 置信度: ${intentResult.confidence}`);
     console.log(`  - 危机级别: ${intentResult.crisisLevel}`);
+
+    // ════════════════════════════════════════════════════════
+    // 2.5层：情感分析（实时分析用户情感状态）
+    // ════════════════════════════════════════════════════════
+    const emotionAnalysis = emotionAnalyzer.analyzeAndRecord(
+      message.deviceId || connectionId,
+      message.text
+    );
+
+    console.log(`[2.5层✅] 情感分析结果:`);
+    console.log(`  - 极性: ${emotionAnalysis.sentiment} (${emotionAnalysis.score})`);
+    console.log(`  - 主要情绪: ${emotionAnalysis.primaryEmotion}`);
+    console.log(`  - 强度: ${emotionAnalysis.intensity}/10`);
+    console.log(`  - 危机级别: ${emotionAnalysis.crisisLevel}`);
+
+    // 如果检测到危机信号，触发主动服务预警
+    if (emotionAnalysis.crisisLevel === 'urgent' || emotionAnalysis.crisisLevel === 'warning') {
+      await proactiveService.triggerCrisisAlert(
+        message.deviceId || connectionId,
+        emotionAnalysis
+      );
+    }
 
     // ════════════════════════════════════════════════════════
     // 第三层：安全检查（代码强制执行，<1ms）
@@ -308,6 +348,9 @@ app.get('/health', (req, res) => {
   });
 });
 
+// 注册情绪可视化API路由
+app.use(emotionVisualization.getRouter());
+
 // 启动服务器
 server.listen(PORT, () => {
   console.log('');
@@ -334,10 +377,19 @@ server.listen(PORT, () => {
   }
   
   console.log('╠══════════════════════════════════════════════════╣');
-  console.log('║  三级架构：                                        ║');
-  console.log('║  第一层：正则快速匹配（零成本）                    ║');
-  console.log('║  第二层：AI意图识别（智谱GLM）                     ║');
-  console.log('║  第三层：安全检查规则（代码强制）                  ║');
+  console.log('║  核心功能模块：                                    ║');
+  console.log('║  ✅ 三级架构（正则匹配+AI识别+安全检查）          ║');
+  console.log('║  ✅ 情感分析引擎（实时情绪识别与追踪）            ║');
+  console.log('║  ✅ 长期记忆系统（用户画像与核心记忆）             ║');
+  console.log('║  ✅ 知识库检索（RAG增强回复）                      ║');
+  console.log('║  ✅ 主动服务模块（定时关怀推送）                   ║');
+  console.log('║  ✅ 情绪可视化API（趋势图表数据接口）              ║');
+  console.log('╠══════════════════════════════════════════════════╣');
+  console.log('║  API端点：                                         ║');
+  console.log(`║  健康检查:   http://localhost:${portStr}/health`.padEnd(47) + '║');
+  console.log(`║  情绪趋势:   http://localhost:${portStr}/api/emotion/trend/:userId`.padEnd(47) + '║');
+  console.log(`║  情绪报告:   http://localhost:${portStr}/api/emotion/report/:userId`.padEnd(47) + '║');
+  console.log(`║  数据仪表盘: http://localhost:${portStr}/api/emotion/dashboard/:userId`.padEnd(47) + '║');
   console.log('╚══════════════════════════════════════════════════╝');
   console.log('');
 });

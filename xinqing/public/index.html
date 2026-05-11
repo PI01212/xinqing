@@ -744,22 +744,45 @@ function getDid(){
 const API_BASE = '';
 
 async function apiGet(url) {
+  console.log('[API] 请求:', url);
   try {
     const r = await fetch(API_BASE + url);
+    console.log('[API] 响应状态:', r.status);
+    
     const j = await r.json();
-    if (j.success !== false) return j.data || j;
-    return null;
+    console.log('[API] 响应数据:', j);
+    
+    if (j.success === false) {
+      console.warn('[API] 返回失败');
+      return null;
+    }
+    return j.data || j;
   } catch(e) {
-    console.warn('[API] 请求失败:', url, e.message);
+    console.error('[API] ❌ 请求失败:', url, e.message);
     return null;
   }
 }
 
 async function fetchDashboard() {
-  const data = await apiGet(`/api/emotion/dashboard/${did}`);
+  if (!did) {
+    console.warn('[仪表盘] DeviceID为空，跳过');
+    return;
+  }
+  
+  const url = `/api/emotion/dashboard/${did}`;
+  const data = await apiGet(url);
+  
   if (data) {
+    console.log('[仪表盘] ✅ 数据获取成功，开始渲染');
     dashboardData = data;
     renderDashboard(data);
+  } else {
+    console.log('[仪表盘] ⚠️ 暂无数据（可能还没有对话记录）');
+    // 显示"暂无数据"提示
+    document.getElementById('wbScore').textContent = '--';
+    document.getElementById('wbDesc').textContent = '发送消息后即可查看统计数据';
+    document.getElementById('wbFill').style.width = '0%';
+    document.getElementById('lastUpdate').textContent = '暂无数据';
   }
 }
 
@@ -924,27 +947,52 @@ function renderTrendBars(dataPoints) {
 }
 
 // ==================== WebSocket连接 ====================
+function connect(){
   const p=location.protocol==='https:'?'wss:':'ws:';
   try{
     ws=new WebSocket(`${p}//${location.host}`);
+    console.log('[WS] 正在连接:', `${p}//${location.host}`);
+    
     ws.onopen=()=>{
+      console.log('[WS] ✅ 连接成功');
       document.getElementById('connStatus').textContent='已连接';
       document.getElementById('sendBtn').disabled=false;
+      document.getElementById('connStatus').style.color='var(--success)';
     };
+    
     ws.onmessage=e=>{
-      const m=JSON.parse(e.data);
-      if(m.type==='chat'&&m.text){
-        removeTyping();
-        addMsg(m.text,'bot',m.timestamp,m.text.includes('🚨')||m.text.includes('危机'));
-        count++;refreshAfterMessage();
-      }else if(m.type==='push_care'){/* 可扩展 */}
+      try{
+        const m=JSON.parse(e.data);
+        console.log('[WS] 收到消息:', m.type, m.text ? m.text.slice(0,50) : '');
+        
+        if(m.type==='chat'&&m.text){
+          removeTyping();
+          addMsg(m.text,'bot',m.timestamp,m.text.includes('🚨')||m.text.includes('危机'));
+          count++;refreshAfterMessage();
+        }else if(m.type==='push_care'){
+          console.log('[WS] 收到推送:', m.content?.slice(0,50));
+        }
+      }catch(err){
+        console.error('[WS] 消息解析失败:', err);
+      }
     };
-    ws.onclose=()=>{
+    
+    ws.onclose=(e)=>{
+      console.log('[WS] ❌ 连接关闭, code:', e.code);
       document.getElementById('connStatus').textContent='未连接';
+      document.getElementById('connStatus').style.color='var(--danger)';
       document.getElementById('sendBtn').disabled=true;
       setTimeout(connect,3000);
     };
-  }catch(e){setTimeout(connect,3000);}
+    
+    ws.onerror=(err)=>{
+      console.error('[WS] ❌ 错误:', err);
+    };
+    
+  }catch(e){
+    console.error('[WS] 创建连接失败:', e);
+    setTimeout(connect,3000);
+  }
 }
 
 function addMsg(text,type,ts,isCrisis=false){
@@ -970,10 +1018,31 @@ function removeTyping(){typing=false;const e=document.getElementById('ti');if(e)
 function send(){
   const i=document.getElementById('input');
   const t=i.value.trim();
-  if(!t||!ws||ws.readyState!==WebSocket.OPEN)return;
+  
+  // 调试信息
+  console.log('[发送] 文本:', t);
+  console.log('[发送] WS状态:', ws ? ws.readyState : 'null (未创建)');
+  console.log('[发送] DeviceID:', did);
+  
+  if(!t){console.warn('[发送] 文本为空');return;}
+  if(!ws){console.warn('[发送] WS未创建');return;}
+  if(ws.readyState!==WebSocket.OPEN){
+    console.warn('[发送] WS未打开, 状态:', ws.readyState);
+    alert('连接中，请稍候...');
+    return;
+  }
+  
   addMsg(t,'user');
   showTyping();
-  ws.send(JSON.stringify({type:'chat',text:t,deviceId:did,timestamp:Date.now()}));
+  
+  try{
+    ws.send(JSON.stringify({type:'chat',text:t,deviceId:did,timestamp:Date.now()}));
+    console.log('[发送] ✅ 消息已发出');
+  }catch(e){
+    console.error('[发送] 发送失败:', e);
+    removeTyping();
+  }
+  
   i.value='';i.style.height='auto';
 }
 function quick(t){document.getElementById('input').value=t;send();}
@@ -983,6 +1052,7 @@ function fmt(t){const d=new Date(t);return d.getHours().toString().padStart(2,'0
 function clearChat(){document.getElementById('msgs').innerHTML='';count=0;addMsg('对话已清空。有什么想聊的随时告诉我～ 😊','bot',Date.now());}
 
 function openDrawer(){
+  console.log('[抽屉] 打开数据面板');
   document.getElementById('overlay').classList.add('show');
   document.getElementById('drawer').classList.add('open');
   fetchDashboard();
@@ -997,13 +1067,13 @@ async function updateStats() {
 // 每次发消息后刷新数据
 async function refreshAfterMessage() {
   document.getElementById('stChats').textContent = count;
-  // 延迟一点让后端处理完情绪分析
   setTimeout(() => fetchDashboard(), 500);
 }
 
 // ==================== 动画工具 ====================
 function anim(id,to){
   const el=document.getElementById(id);
+  if(!el)return;
   const from=parseInt(el.textContent)||0;
   const dur=800;
   const st=performance.now();
@@ -1017,19 +1087,22 @@ function anim(id,to){
 
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded',()=>{
+  console.log('╔════════════════════════════════════╗');
+  console.log('║   🌸 心晴 v3.3 - 真实数据版        ║');
+  console.log('╚════════════════════════════════════╝');
+  
   did=getDid();
+  console.log('[初始化] DeviceID:', did);
+  
   connect();
 
   // 首次加载时获取仪表盘数据
   setTimeout(() => {
-    if (did) fetchDashboard();
-  }, 1000);
-
-  console.log('');
-  console.log('╔════════════════════════════════════╗');
-  console.log('║   🌸 心晴 v3.2 - 真实数据版        ║');
-  console.log(`║  Device: ${did.padEnd(28)}║`);
-  console.log('╚════════════════════════════════════╝');
+    if (did) {
+      console.log('[初始化] 开始获取仪表盘数据...');
+      fetchDashboard();
+    }
+  }, 1500);
 });
   document.getElementById('input').addEventListener('keydown',onKey);
   setTimeout(()=>{anim('wbScore',72);document.getElementById('wbFill').style.width='72%';},400);

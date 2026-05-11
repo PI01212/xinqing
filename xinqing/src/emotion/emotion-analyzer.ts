@@ -185,10 +185,13 @@ export class EmotionAnalyzer {
       result.intensity = Math.abs(result.score);
     }
 
-    // 9. 判断是否需要关注
+    // 9.5 危机情绪强制分数调整（自杀意念等必须返回高负分）
+    result = this.adjustScoreForCrisisEmotions(result);
+
+    // 10. 判断是否需要关注
     result.needsAttention = this.checkNeedsAttention(result);
     
-    // 10. 判断危机级别
+    // 11. 判断危机级别
     result.crisisLevel = this.determineCrisisLevel(result);
 
     return result;
@@ -436,6 +439,57 @@ export class EmotionAnalyzer {
       result.crisisLevel === 'urgent' ||
       (result.sentiment === 'negative' && result.score < -5)
     );
+  }
+
+  /**
+   * 9.5 危机情绪强制分数调整
+   * 自杀意念、自伤等危机情绪必须返回高负分（-8到-10）
+   */
+  private adjustScoreForCrisisEmotions(result: EmotionAnalysisResult): EmotionAnalysisResult {
+    // 检查是否有危机类别情绪
+    const crisisEmotions = result.emotions.filter(e => e.category === 'crisis');
+    
+    if (crisisEmotions.length > 0) {
+      // 找到最高强度的危机情绪
+      const maxCrisis = crisisEmotions.reduce((prev, current) => 
+        prev.intensity > current.intensity ? prev : current
+      );
+      
+      // 根据危机情绪类型和强度设置负分
+      let crisisScore: number;
+      
+      if (maxCrisis.name === '自杀意念') {
+        // 自杀意念：-9到-10（最严重）
+        crisisScore = -9 - (Math.min(maxCrisis.intensity, 10) / 10);
+      } else if (maxCrisis.name === '心理崩溃') {
+        // 心理崩溃：-8到-9.5
+        crisisScore = -8 - (Math.min(maxCrisis.intensity, 10) / 20);
+      } else {
+        // 其他危机情绪：-7到-8
+        crisisScore = -7 - (Math.min(maxCrisis.intensity, 10) / 30);
+      }
+      
+      // 确保分数在有效范围内
+      result.score = Math.max(-10, Math.min(crisisScore, -7));
+      result.sentiment = 'negative';
+      
+      console.log(`[情感分析] ⚠️ 检测到危机情绪 "${maxCrisis.name}"，分数调整为: ${result.score}`);
+    }
+    
+    // 检查高强度负面情绪（非危机但严重）
+    const severeNegative = result.emotions.find(e => 
+      e.category !== 'crisis' && 
+      e.intensity >= 8 &&
+      ['抑郁情绪', '无价值感', '愤怒'].includes(e.name)
+    );
+    
+    if (severeNegative && result.score > -5) {
+      // 高强度负面情绪至少应该是中度负面
+      result.score = Math.min(result.score, -5);
+      console.log(`[情感分析] ⚠️ 检测到高强度负面情绪 "${severeNegative.name}"，分数调整为: ${result.score}`);
+    }
+    
+    return result;
   }
 
   /**

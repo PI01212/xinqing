@@ -314,10 +314,16 @@ async function handleMessage(ws: WebSocket, message: Message, connectionId: stri
     );
 
     // 发送最终回复（包含情感分析结果）
+    const isSafetyResponse = !safetyResult.pass || 
+                            safetyResult.level === 'WARN' || 
+                            safetyResult.level === 'URGENT';
+    
     sendMessage(ws, {
       type: 'chat',
       text: finalResponse,
       reply: finalResponse,  // 前端使用
+      isSafetyResponse: isSafetyResponse,  // 标记是否为安全回复（前端用于红色背景）
+      safetyLevel: safetyResult.level,     // 安全级别信息
       emotionAnalysis: {      // 情感分析数据（前端用于显示）
         sentiment: emotionAnalysis.sentiment,
         score: emotionAnalysis.score,

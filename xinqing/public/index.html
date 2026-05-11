@@ -574,8 +574,11 @@
             document.getElementById('typingIndicator').style.display = 'none';
             
             if (data.type === 'chat' && data.reply) {
-                // 显示AI回复
-                addAIMessage(data.reply);
+                // 判断是否为安全回复（第三层拦截或警告）
+                const isSafetyResponse = data.isSafetyResponse === true;
+                
+                // 显示AI回复（如果是安全回复则使用红色背景）
+                addAIMessage(data.reply, '', isSafetyResponse);
                 
                 // 如果有情感分析结果
                 if (data.emotionAnalysis) {
@@ -590,12 +593,20 @@
         }
 
         // 添加AI消息
-        function addAIMessage(text, emotionTag = '') {
+        function addAIMessage(text, emotionTag = '', isSafetyResponse = false) {
             const messagesDiv = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message ai';
+            
+            // 根据是否为安全回复选择不同的样式
+            let bubbleStyle = '';
+            if (isSafetyResponse) {
+                // 安全回复：红色背景 + 红色边框 + 警告图标
+                bubbleStyle = 'background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 2px solid #ef4444; color: #991b1b;';
+            }
+            
             messageDiv.innerHTML = `
-                <div class="message-bubble">${formatText(text)} ${emotionTag}</div>
+                <div class="message-bubble" style="${bubbleStyle}">${formatText(text)} ${emotionTag}</div>
             `;
             messagesDiv.appendChild(messageDiv);
             scrollToBottom();

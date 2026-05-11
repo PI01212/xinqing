@@ -74,11 +74,11 @@ const emotionAnalyzer = createEmotionAnalyzer();
 // 主动服务模块
 const proactiveService = createProactiveService();
 
+// 数据持久化服务（用于保存情绪数据到文件）- 必须在emotionVisualization之前创建
+const persistenceService = createDataPersistenceService();
+
 // 情绪可视化服务（传入持久化服务，确保数据从文件读取）
 const emotionVisualization = createEmotionVisualizationService(persistenceService);
-
-// 数据持久化服务（用于保存情绪数据到文件）
-const persistenceService = createDataPersistenceService();
 
 /**
  * 消息类型定义

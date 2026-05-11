@@ -4,533 +4,1479 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>心晴 - 大学生心理健康陪伴助手</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --primary: #667eea;
+      --primary-dark: #764ba2;
+      --success: #51cf66;
+      --warning: #fcc419;
+      --danger: #ff6b6b;
+      --info: #339af0;
+      --bg-light: #f8f9fa;
+      --bg-dark: #212529;
+      --text-primary: #343a40;
+      --text-secondary: #868e96;
+      --border-color: #dee2e6;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.16);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
     }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
+      color: var(--text-primary);
+      overflow-x: hidden;
     }
 
-    .container {
-      width: 100%;
-      max-width: 800px;
-      height: 90vh;
-      max-height: 700px;
+    /* ==================== 主布局 ==================== */
+    .app-container {
+      display: grid;
+      grid-template-columns: 280px 1fr 320px;
+      height: 100vh;
+      gap: 0;
+    }
+
+    @media (max-width: 1200px) {
+      .app-container {
+        grid-template-columns: 240px 1fr;
+      }
+      .right-panel { display: none; }
+    }
+
+    @media (max-width: 768px) {
+      .app-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+      }
+      .left-sidebar { display: none; }
+      .right-panel { 
+        display: block;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: auto;
+        max-height: 40vh;
+        z-index: 100;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      }
+    }
+
+    /* ==================== 左侧边栏 ==================== */
+    .left-sidebar {
       background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
     }
 
-    /* 头部 */
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 20px;
+    .logo-section {
+      text-align: center;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 24px;
+    }
+
+    .logo-icon {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 50%;
       display: flex;
       align-items: center;
-      gap: 15px;
+      justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 16px;
+      box-shadow: var(--shadow-md);
+      animation: float 3s ease-in-out infinite;
     }
 
-    .header-avatar {
-      width: 50px;
-      height: 50px;
-      background: white;
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .logo-title {
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* 用户信息卡片 */
+    .user-card {
+      background: linear-gradient(135deg, #667eea15, #764ba215);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-bottom: 24px;
+      border: 1px solid #667eea30;
+    }
+
+    .user-avatar-large {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 28px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      margin: 0 auto 12px;
+      box-shadow: var(--shadow-sm);
     }
 
-    .header-info h1 {
-      font-size: 20px;
+    .user-name {
       font-weight: 600;
+      font-size: 16px;
+      text-align: center;
       margin-bottom: 4px;
     }
 
-    .header-info p {
+    .user-status {
+      text-align: center;
       font-size: 13px;
-      opacity: 0.9;
+      color: var(--text-secondary);
     }
 
-    .status {
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--success);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    .status-dot-small {
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* 导航菜单 */
+    .nav-menu {
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 6px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+
+    .nav-item:hover {
+      background: #f1f3f5;
+      transform: translateX(4px);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-item i {
+      width: 22px;
+      text-align: center;
+      font-size: 17px;
+    }
+
+    .nav-item .badge {
       margin-left: auto;
+      background: var(--danger);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* 底部信息 */
+    .sidebar-footer {
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ==================== 中间主区域 ==================== */
+    .main-area {
+      display: flex;
+      flex-direction: column;
+      background: white;
+      overflow: hidden;
+    }
+
+    /* 头部 */
+    .main-header {
+      background: white;
+      padding: 18px 28px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--text-primary);
+    }
+
+    @media (max-width: 1200px) {
+      .mobile-menu-btn { display: block; }
+    }
+
+    .chat-title {
+      font-size: 19px;
+      font-weight: 600;
+    }
+
+    .online-indicator {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 12px;
-      background: rgba(255, 255, 255, 0.2);
-      padding: 6px 12px;
-      border-radius: 20px;
+      font-size: 13px;
+      color: var(--success);
+      font-weight: 500;
     }
 
-    .status-dot {
+    .online-dot {
       width: 10px;
       height: 10px;
+      background: var(--success);
       border-radius: 50%;
-      background: #ff6b6b;
-      animation: pulse 2s infinite;
+      animation: pulse-dot 2s infinite;
     }
 
-    .status-dot.connected {
-      background: #51cf66;
-      animation: none;
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: var(--bg-light);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    .icon-btn:hover {
+      background: var(--primary);
+      color: white;
+      transform: scale(1.05);
     }
 
     /* 消息区域 */
-    .messages {
+    .messages-area {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 24px;
+      background: linear-gradient(to bottom, #fafbff 0%, #f8f9fa 100%);
       display: flex;
       flex-direction: column;
-      gap: 15px;
-      background: #f8f9fa;
+      gap: 16px;
     }
 
-    .messages::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .messages::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.2);
+    .messages-area::-webkit-scrollbar { width: 6px; }
+    .messages-area::-webkit-scrollbar-thumb {
+      background: rgba(102, 126, 234, 0.3);
       border-radius: 3px;
     }
 
-    .message {
-      max-width: 80%;
-      padding: 14px 18px;
-      border-radius: 18px;
+    /* 消息气泡 */
+    .message-wrapper {
+      max-width: 75%;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-wrapper.user {
+      align-self: flex-end;
+    }
+
+    .message-wrapper.assistant {
+      align-self: flex-start;
+    }
+
+    .message-bubble {
+      padding: 16px 20px;
+      border-radius: var(--radius-lg);
+      line-height: 1.65;
       font-size: 15px;
-      line-height: 1.6;
       word-wrap: break-word;
       position: relative;
-      animation: fadeIn 0.3s ease-out;
     }
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .message.user {
-      align-self: flex-end;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .message-wrapper.user .message-bubble {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
       border-bottom-right-radius: 6px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
-    .message.assistant {
-      align-self: flex-start;
+    .message-wrapper.assistant .message-bubble {
       background: white;
-      color: #333;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      color: var(--text-primary);
       border-bottom-left-radius: 6px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
     }
 
     .message-time {
       font-size: 11px;
-      color: rgba(0, 0, 0, 0.4);
-      margin-top: 6px;
+      margin-top: 8px;
+      opacity: 0.6;
+    }
+
+    .message-wrapper.user .message-time {
       text-align: right;
     }
 
-    .message.user .message-time {
-      color: rgba(255, 255, 255, 0.7);
+    /* 危机消息特殊样式 */
+    .message-crisis .message-bubble {
+      background: linear-gradient(135deg, var(--danger), #ee5a52) !important;
+      border-color: #cc0000 !important;
+      animation: crisis-pulse 2s infinite;
+    }
+
+    @keyframes crisis-pulse {
+      0%, 100% { box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4); }
+      50% { box-shadow: 0 4px 24px rgba(255, 107, 107, 0.7); }
+    }
+
+    /* 打字指示器 */
+    .typing-indicator {
+      display: inline-flex;
+      gap: 6px;
+      padding: 14px 20px;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .typing-dot {
+      width: 9px;
+      height: 9px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: typing-bounce 1.4s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes typing-bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-10px); opacity: 1; }
     }
 
     /* 输入区域 */
     .input-area {
-      padding: 15px 20px;
+      padding: 18px 24px;
       background: white;
-      border-top: 1px solid #e9ecef;
+      border-top: 1px solid var(--border-color);
       display: flex;
-      gap: 10px;
-      align-items: center;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      background: var(--bg-light);
+      border: 2px solid var(--border-color);
+      border-radius: 28px;
+      padding: 8px 16px;
+      transition: all 0.25s ease;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: var(--primary);
+      background: white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
     }
 
     #messageInput {
       flex: 1;
-      border: 2px solid #e9ecef;
-      background: #f8f9fa;
-      padding: 12px 18px;
-      border-radius: 25px;
+      border: none;
+      background: transparent;
+      padding: 10px 8px;
       font-size: 15px;
       outline: none;
-      transition: all 0.3s ease;
+      resize: none;
+      max-height: 120px;
+      line-height: 1.5;
     }
 
-    #messageInput:focus {
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    #messageInput::placeholder { color: var(--text-secondary); }
+
+    .input-actions {
+      display: flex;
+      gap: 6px;
     }
 
-    #messageInput::placeholder {
-      color: #adb5bd;
-    }
-
-    .send-btn {
-      width: 48px;
-      height: 48px;
+    .input-action-btn {
+      width: 38px;
+      height: 38px;
       border: none;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: transparent;
       border-radius: 50%;
       cursor: pointer;
-      font-size: 20px;
-      transition: all 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+      font-size: 16px;
     }
 
-    .send-btn:hover:not(:disabled) {
-      transform: scale(1.05);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    .input-action-btn:hover {
+      background: var(--bg-light);
+      color: var(--primary);
     }
 
-    .send-btn:active:not(:disabled) {
+    .send-button {
+      width: 48px;
+      height: 48px;
+      border: none;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
+    }
+
+    .send-button:hover:not(:disabled) {
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
+    }
+
+    .send-button:active:not(:disabled) {
       transform: scale(0.95);
     }
 
-    .send-btn:disabled {
-      opacity: 0.5;
+    .send-button:disabled {
+      opacity: 0.4;
       cursor: not-allowed;
-      transform: none;
     }
 
-    /* 打字动画 */
-    .typing-indicator {
-      display: flex;
-      gap: 5px;
-      padding: 12px 16px;
+    /* ==================== 右侧面板 ==================== */
+    .right-panel {
       background: white;
-      border-radius: 18px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-      width: fit-content;
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
     }
 
-    .typing-indicator span {
-      width: 8px;
+    .panel-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+      background: linear-gradient(135deg, #f8f9fa, #fff);
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-tabs {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .panel-tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: var(--bg-light);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+
+    .panel-tab.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .panel-tab:hover:not(.active) {
+      background: #e9ecef;
+    }
+
+    .panel-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    /* 幸福感仪表盘 */
+    .wellbeing-card {
+      background: linear-gradient(135deg, #667eea10, #764ba210);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      text-align: center;
+      border: 1px solid #667eea20;
+      margin-bottom: 20px;
+    }
+
+    .wellbeing-score {
+      font-size: 48px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .wellbeing-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .wellbeing-bar {
       height: 8px;
-      background: #667eea;
-      border-radius: 50%;
-      animation: typing 1.4s infinite ease-in-out;
+      background: #e9ecef;
+      border-radius: 4px;
+      margin-top: 16px;
+      overflow: hidden;
     }
 
-    .typing-indicator span:nth-child(2) {
-      animation-delay: 0.2s;
+    .wellbing-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success), var(--info), var(--primary));
+      border-radius: 4px;
+      transition: width 1s ease;
     }
 
-    .typing-indicator span:nth-child(3) {
-      animation-delay: 0.4s;
+    /* 统计卡片网格 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
     }
 
-    @keyframes typing {
-      0%, 60%, 100% {
-        transform: translateY(0);
-        opacity: 0.4;
-      }
-      30% {
-        transform: translateY(-8px);
-        opacity: 1;
-      }
+    .stat-card {
+      background: var(--bg-light);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      text-align: center;
     }
 
-    /* 响应式设计 */
-    @media (max-width: 600px) {
-      body {
-        padding: 0;
-      }
-
-      .container {
-        max-width: 100%;
-        height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
-      }
-
-      .message {
-        max-width: 90%;
-      }
+    .stat-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--primary);
     }
 
-    /* 危机提示样式 */
-    .crisis-alert {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important;
-      color: white !important;
-      border: 2px solid #ff0000 !important;
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* 趋势迷你图 */
+    .trend-chart {
+      background: var(--bg-light);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .trend-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .trend-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .trend-badge {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .trend-up {
+      background: #d3f9d8;
+      color: #2b8a3e;
+    }
+
+    .trend-down {
+      background: #ffe3e3;
+      color: #c92a2a;
+    }
+
+    .mini-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 80px;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: linear-gradient(to top, var(--primary), #a5b4fc);
+      border-radius: 4px 4px 0 0;
+      min-height: 8px;
+      transition: height 0.5s ease;
+      position: relative;
+    }
+
+    .chart-bar:hover {
+      filter: brightness(1.1);
+    }
+
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    /* 推荐卡片 */
+    .recommendation-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .recommendation-card {
+      background: var(--bg-light);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-left: 4px solid transparent;
+    }
+
+    .recommendation-card:hover {
+      background: white;
+      border-left-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+      transform: translateX(4px);
+    }
+
+    .rec-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #667eea20, #764ba220);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .rec-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .rec-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* 推送消息列表 */
+    .push-message {
+      background: linear-gradient(135deg, #fff9db, #fff3bf);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--warning);
+      animation: slideInRight 0.3s ease-out;
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .push-type {
+      font-size: 11px;
+      font-weight: 600;
+      color: #e67700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .push-content {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text-primary);
+    }
+
+    .push-time {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    /* 快捷操作按钮组 */
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .quick-action-btn {
+      padding: 10px 16px;
+      border: 1px solid var(--border-color);
+      background: white;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quick-action-btn:hover {
+      border-color: var(--primary);
+      background: linear-gradient(135deg, #667eea10, #764ba210);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Markdown渲染样式 */
+    .message-bubble strong { font-weight: 600; }
+    .message-bubble em { font-style: italic; }
+    .message-bubble code {
+      background: rgba(0,0,0,0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .message-wrapper.user .message-bubble code {
+      background: rgba(255,255,255,0.2);
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- 头部 -->
-    <div class="header">
-      <div class="header-avatar">🌟</div>
-      <div class="header-info">
-        <h1>心晴</h1>
-        <p>大学生心理健康陪伴助手</p>
-      </div>
-      <div class="status">
-        <span class="status-dot" id="statusDot"></span>
-        <span id="statusText">连接中...</span>
+
+<div class="app-container">
+
+  <!-- ==================== 左侧边栏 ==================== -->
+  <aside class="left-sidebar" id="leftSidebar">
+    
+    <!-- Logo区域 -->
+    <div class="logo-section">
+      <div class="logo-icon">🌸</div>
+      <h1 class="logo-title">心晴</h1>
+      <p class="logo-subtitle">大学生心理健康陪伴助手</p>
+    </div>
+
+    <!-- 用户信息卡片 -->
+    <div class="user-card">
+      <div class="user-avatar-large" id="userAvatar">😊</div>
+      <div class="userName" id="userName">新朋友</div>
+      <div class="userStatus" id="userStatus">让我们开始了解彼此吧～</div>
+      <div class="status-badge">
+        <span class="status-dotSmall"></span>
+        <span id="connectionStatus">连接中...</span>
       </div>
     </div>
+
+    <!-- 导航菜单 -->
+    <nav class="navMenu">
+      <button class="navItem active" data-tab="chat" onclick="switchTab('chat')">
+        <i class="fas fa-comments"></i>
+        <span>智能对话</span>
+      </button>
+      <button class="navItem" data-tab="emotion" onclick="switchTab('emotion')">
+        <i class="fas fa-heart-pulse"></i>
+        <span>情绪追踪</span>
+      </button>
+      <button class="navItem" data-tab="knowledge" onclick="switchTab('knowledge')">
+        <i class="fas fa-book-open"></i>
+        <span>知识库</span>
+      </button>
+      <button class="navItem" data-tab="care" onclick="switchTab('care')">
+        <i class="fas fa-hands-helping"></i>
+        <span>关怀推送</span>
+      </button>
+      <button class="navItem" dataTab="profile" onclick="switchTab('profile')">
+        <i class="fas fa-user-circle"></i>
+        <span>我的档案</span>
+      </button>
+    </nav>
+
+    <!-- 底部信息 -->
+    <div class="sidebarFooter">
+      <p>💙 用心陪伴，温暖守护</p>
+      <p style="margin-top: 4px;">Version 3.0 | Powered by AI</p>
+    </div>
+
+  </aside>
+
+
+  <!-- ==================== 中间主区域 ==================== -->
+  <main class="mainArea">
+
+    <!-- 头部 -->
+    <header class="mainHeader">
+      <div class="headerLeft">
+        <button class="mobileMenuBtn" onclick="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div>
+          <h2 class="chatTitle" id="currentTabTitle">智能对话</h2>
+          <div class="onlineIndicator">
+            <span class="onlineDot"></span>
+            <span>在线服务中</span>
+          </div>
+        </div>
+      </div>
+      <div class="headerActions">
+        <button class="iconBtn" onclick="clearChat()" title="清空对话">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+        <button class="iconBtn" onclick="toggleTheme()" title="切换主题">
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
+    </header>
 
     <!-- 消息区域 -->
-    <div class="messages" id="messages"></div>
+    <div class="messagesArea" id="messagesArea">
+      
+      <!-- 欢迎消息 -->
+      <div class="messageWrapper assistant">
+        <div class="messageBubble">
+          <p style="margin-bottom: 12px;">👋 你好呀！我是<strong style="color: var(--primary)">心晴</strong></p>
+          <p style="margin-bottom: 12px;">我是你的心理健康陪伴助手，在这里你可以：</p>
+          <ul style="margin-left: 20px; margin-bottom: 12px;">
+            <li>📝 分享你的情绪和感受</li>
+            <li>💬 倾诉你的烦恼和压力</li>
+            <li>🧘 学习放松和减压技巧</li>
+            <li>💙 获得温暖的理解和支持</li>
+          </ul>
+          <p>无论你想聊什么，我都在这里倾听你～ 💫</p>
+        </div>
+        <div class="messageTime">刚刚</div>
+      </div>
+
+    </div>
 
     <!-- 输入区域 -->
-    <div class="input-area">
-      <input 
-        type="text" 
-        id="messageInput" 
-        placeholder="分享你的心情或想法..." 
-        autocomplete="off"
-      />
-      <button class="send-btn" id="sendBtn" disabled>➤</button>
+    <div class="inputArea">
+      <div class="inputWrapper">
+        <textarea 
+          id="messageInput" 
+          placeholder="分享你的心情或想法..." 
+          rows="1"
+          onkeydown="handleKeyDown(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <div class="inputActions">
+          <button class="inputActionBtn" title="表情">
+            <i class="far fa-smile"></i>
+          </button>
+        </div>
+      </div>
+      <button class="sendButton" id="sendBtn" onclick="sendMessage()" disabled>
+        <i class="fas fa-paper-plane"></i>
+      </button>
     </div>
-  </div>
 
-  <script>
-    // ==================== 设备身份管理 ====================
-    const DEVICE_ID_KEY = 'xinqing-device-id';
+  </main>
 
-    function getOrCreateDeviceId() {
-      let deviceId = localStorage.getItem(DEVICE_ID_KEY);
 
-      if (!deviceId) {
-        deviceId = 'xinqing-' + Date.now().toString(36) + '-' + 
-                   Math.random().toString(36).substr(2, 9);
-        localStorage.setItem(DEVICE_ID_KEY, deviceId);
-        console.log('[设备] 创建新设备ID:', deviceId);
-      } else {
-        console.log('[设备] 使用已有设备ID:', deviceId);
-      }
+  <!-- ==================== 右侧面板 ==================== -->
+  <aside class="rightPanel" id="rightPanel">
 
-      return deviceId;
-    }
+    <!-- 面板头部 -->
+    <div class="panelHeader">
+      <h3 class="panelTitle"><i class="fas fa-chart-line"></i> 数据概览</h3>
+      <div class="panelTabs">
+        <button class="panelTab active" onclick="switchPanelTab('overview')">概览</button>
+        <button class="panelTab" onclick="switchPanelTab('trends')">趋势</button>
+        <button class="panelTab" onclick="switchPanelTab('tips')">建议</button>
+      </div>
+    </div>
 
-    // ==================== WebSocket连接 ====================
-    const messagesContainer = document.getElementById('messages');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
+    <!-- 面板内容 -->
+    <div class="panelContent" id="panelContent">
 
-    let ws = null;
-    let deviceId = getOrCreateDeviceId();
-    let isTyping = false;
+      <!-- 概览视图 -->
+      <div id="overviewView">
 
-    function connect() {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}`;
+        <!-- 幸福感评分 -->
+        <div class="wellbeingCard">
+          <div class="wellbeingScore" id="wellbeingScore">--</div>
+          <div class="wellbeingLabel">综合幸福感指数</div>
+          <div class="wellbeingBar">
+            <div class="wellbingBarFill" id="wellnessBarFill" style="width: 0%"></div>
+          </div>
+        </div>
 
-      console.log('[连接] 正在连接:', wsUrl);
-      
-      try {
-        ws = new WebSocket(wsUrl);
+        <!-- 统计数据 -->
+        <div class="statsGrid">
+          <div class="statCard">
+            <div class="statValue" id="totalChats">0</div>
+            <div class="statLabel">对话次数</div>
+          </div>
+          <div class="statCard">
+            <div class="statValue" id="avgMood">--</div>
+            <div class="statLabel">平均心情</div>
+          </div>
+          <div class="statCard">
+            <div class="statValue" id="activeDays">0</div>
+            <div class="statLabel">活跃天数</div>
+          </div>
+          <div class="statCard">
+            <div class="statValue" id="crisisCount">0</div>
+            <div class="statLabel">预警次数</div>
+          </div>
+        </div>
 
-        ws.onopen = () => {
-          console.log('[连接] ✅ 已连接');
-          statusDot.classList.add('connected');
-          statusText.textContent = '已连接';
-          sendBtn.disabled = false;
-          messageInput.placeholder = '分享你的心情或想法...';
-        };
+        <!-- 迷你趋势图 -->
+        <div class="trendChart">
+          <div class="trendHeader">
+            <span class="trendTitle">近7天情绪变化</span>
+            <span class="trendBadge trendUp" id="moodTrendBadge">稳定</span>
+          </div>
+          <div class="miniChart" id="miniChart">
+            <div class="chartBar" style="height: 60%"></div>
+            <div class="chartBar" style="height: 75%"></div>
+            <div class="chartBar" style="height: 45%"></div>
+            <div class="chartBar" style="height: 70%"></div>
+            <div class="chartBar" style="height: 85%"></div>
+            <div class="chartBar" style="height: 65%"></div>
+            <div class="chartBar" style="height: 78%"></div>
+          </div>
+          <div class="chartLabels">
+            <span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span>
+          </div>
+        </div>
 
-        ws.onmessage = (event) => {
-          const message = JSON.parse(event.data);
+        <!-- 快捷操作 -->
+        <p style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-secondary);">
+          <i class="fas fa-bolt" style="color: var(--warning)"></i> 快捷话题
+        </p>
+        <div class="quickActions">
+          <button class="quickActionBtn" onclick="sendQuickMessage('最近感觉压力很大')">😰 有压力</button>
+          <button class="quickActionBtn" onclick="sendQuickMessage('今天心情还不错')">😊 心情好</button>
+          <button class="quickActionBtn" onclick="sendQuickMessage('睡不着觉，很焦虑')">😴 睡眠问题</button>
+          <button class="quickActionBtn" onclick="sendQuickMessage('想学习一些放松技巧')">🧘 放松技巧</button>
+        </div>
+
+      </div>
+
+      <!-- 趋势视图 -->
+      <div id="trendsView" style="display: none;">
+        <div class="trendChart">
+          <div class="trendHeader">
+            <span class="trendTitle">详细情绪趋势</span>
+            <select id="trendPeriodSelect" onchange="updateTrendChart()" style="padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px;">
+              <option value="7">近7天</option>
+              <option value="14">近14天</option>
+              <option value="30">近30天</option>
+            </select>
+          </div>
+          <div class="miniChart" id="detailTrendChart" style="height: 200px; align-items: flex-end;">
+            <!-- 动态生成 -->
+          </div>
+        </div>
+
+        <div class="statsGrid" style="margin-top: 20px;">
+          <div class="statCard">
+            <div class="statValue" id="highestMood">--</div>
+            <div class="statLabel">最高分</div>
+          </div>
+          <div class="statCard">
+            <div class="statValue" id="lowestMood">--</div>
+            <div class="statLabel">最低分</div>
+          </div>
+          <div class="statCard">
+            <div class="statValue" id="positiveDays">--</div>
+            <div class="statLabel">积极天数</div>
+          </div>
+          <div class="statCard">
+            <div class="statValue" id="negativeDays">--</div>
+            <div class="statLabel">消极天数</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 建议视图 -->
+      <div id="tipsView" style="display: none;">
+        
+        <div class="recommendationList" id="recommendationList">
           
-          if (message.type === 'chat' && message.text) {
-            // 移除打字指示器
-            removeTypingIndicator();
-            
-            // 检查是否是危机消息
-            const isCrisis = message.text.includes('🚨') || message.text.includes('危机');
-            
-            addMessage(message.text, 'assistant', message.timestamp, isCrisis);
-          } else if (message.type === 'pong') {
-            console.log('[心跳] 收到响应');
-          }
-        };
+          <div class="recommendationCard" onclick="sendQuickMessage('教我一些放松的方法')">
+            <div class="recIcon">🧘</div>
+            <div class="recTitle">呼吸放松练习</div>
+            <div class="recDesc">4-7-8呼吸法，快速缓解焦虑紧张</div>
+          </div>
 
-        ws.onclose = () => {
-          console.log('[连接] ❌ 已断开');
-          statusDot.classList.remove('connected');
-          statusText.textContent = '未连接';
-          sendBtn.disabled = true;
-          messageInput.placeholder = '等待重新连接...';
-          
-          // 自动重连
-          setTimeout(connect, 3000);
-        };
+          <div class="recommendationCard" onclick="sendQuickMessage('我想了解一下正念冥想')">
+            <div class="recIcon">🧘‍♀️</div>
+            <div class="recTitle">正念冥想入门</div>
+            <div class="recDesc">10分钟正念引导，找回内心平静</div>
+          </div>
 
-        ws.onerror = (error) => {
-          console.error('[错误] WebSocket错误:', error);
-        };
-      } catch (error) {
-        console.error('[错误] 连接失败:', error);
-        setTimeout(connect, 3000);
+          <div class="recommendationCard" onclick="sendQuickMessage('如何改善睡眠质量？')">
+            <div class="recIcon">💤</div>
+            <div class="recTitle">睡眠优化指南</div>
+            <div class="recDesc">CBT-I技术，科学改善失眠问题</div>
+          </div>
+
+          <div class="recommendationCard" onclick="sendQuickMessage('人际关系让我很困扰')">
+            <div class="recIcon">🤝</div>
+            <div class="recTitle">人际沟通技巧</div>
+            <div class="recDesc">非暴力沟通，化解人际冲突</div>
+          </div>
+
+          <div class="recommendationCard" onclick="sendQuickMessage('考试焦虑怎么办？')">
+            <div class="recIcon">📚</div>
+            <div class="recTitle">考试焦虑应对</div>
+            <div class="recDesc">认知重构 + 行为策略，从容应考</div>
+          </div>
+
+          <div class="recommendationCard" onclick="sendQuickMessage('我感到很低落，怎么办')">
+            <div class="recIcon">💙</div>
+            <div class="recTitle">情绪低落支持</div>
+            <div class="recDesc">温暖陪伴 + 专业资源引导</div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 推送消息区域 -->
+    <div style="padding: 16px 20px; border-top: 1px solid var(--border-color); background: var(--bg-light);" id="pushMessagesArea">
+      <p style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">
+        <i class="fas fa-bell" style="color: var(--warning)"></i> 关怀推送
+      </p>
+      <div id="pushMessagesList">
+        <p style="font-size: 12px; color: var(--text-secondary); text-align: center; padding: 20px 0;">
+          暂无推送消息<br>
+          <small>系统会在适当时刻发送关怀提醒</small>
+        </p>
+      </div>
+    </div>
+
+  </aside>
+
+</div>
+
+<script>
+// ==================== 全局变量 ====================
+const DEVICE_ID_KEY = 'xinqing-device-id';
+let ws = null;
+let deviceId = null;
+let isTyping = false;
+let messageCount = 0;
+
+// ==================== 设备身份管理 ====================
+function getOrCreateDeviceId() {
+  let did = localStorage.getItem(DEVICE_ID_KEY);
+  if (!did) {
+    did = 'xinqing-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem(DEVICE_ID_KEY, did);
+  }
+  return did;
+}
+
+// ==================== WebSocket连接 ====================
+function connect() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}`;
+  
+  try {
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('[连接] ✅ 已连接');
+      updateConnectionStatus(true);
+      document.getElementById('sendBtn').disabled = false;
+    };
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      
+      if (msg.type === 'chat' && msg.text) {
+        removeTypingIndicator();
+        const isCrisis = msg.text.includes('🚨') || msg.text.includes('危机');
+        addMessage(msg.text, 'assistant', msg.timestamp, isCrisis);
+        messageCount++;
+        updateStats();
+      } else if (msg.type === 'pong') {
+        console.log('[心跳] OK');
+      } else if (msg.type === 'push_care') {
+        addPushMessage(msg);
       }
-    }
+    };
 
-    // ==================== 消息处理 ====================
+    ws.onclose = () => {
+      console.log('[连接] ❌ 断开');
+      updateConnectionStatus(false);
+      document.getElementById('sendBtn').disabled = true;
+      setTimeout(connect, 3000);
+    };
 
-    /**
-     * 添加消息到聊天窗口
-     */
-    function addMessage(text, type, timestamp = Date.now(), isCrisis = false) {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${type}${isCrisis ? ' crisis-alert' : ''}`;
-      
-      // 处理换行和格式
-      const formattedText = text
-        .replace(/\n/g, '<br>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      
-      messageDiv.innerHTML = `
-        <div class="message-content">${formattedText}</div>
-        <div class="message-time">${formatTime(timestamp)}</div>
-      `;
-      
-      messagesContainer.appendChild(messageDiv);
-      scrollToBottom();
-    }
+    ws.onerror = (err) => {
+      console.error('[错误]', err);
+    };
+  } catch(e) {
+    setTimeout(connect, 3000);
+  }
+}
 
-    /**
-     * 显示打字指示器
-     */
-    function showTypingIndicator() {
-      if (isTyping) return;
-      
-      isTyping = true;
-      const indicator = document.createElement('div');
-      indicator.className = 'typing-indicator';
-      indicator.id = 'typingIndicator';
-      indicator.innerHTML = '<span></span><span></span><span></span>';
-      
-      messagesContainer.appendChild(indicator);
-      scrollToBottom();
-    }
+// ==================== 连接状态更新 ====================
+function updateConnectionStatus(connected) {
+  document.getElementById('connectionStatus').textContent = connected ? '已连接' : '未连接';
+  const dot = document.querySelector('.statusDotSmall');
+  if (connected) {
+    dot.style.background = '#51cf66';
+  } else {
+    dot.style.background = '#ff6b6b';
+  }
+}
 
-    /**
-     * 移除打字指示器
-     */
-    function removeTypingIndicator() {
-      isTyping = false;
-      const indicator = document.getElementById('typingIndicator');
-      if (indicator) {
-        indicator.remove();
-      }
-    }
+// ==================== 消息处理 ====================
+function addMessage(text, type, timestamp, isCrisis = false) {
+  const area = document.getElementById('messagesArea');
+  const wrapper = document.createElement('div');
+  wrapper.className = `messageWrapper ${type}${isCrisis ? ' messageCrisis' : ''}`;
+  
+  const formattedText = text
+    .replace(/\n/g, '<br>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.*?)`/g, '<code>$1</code>');
+  
+  wrapper.innerHTML = `
+    <div class="messageBubble">${formattedText}</div>
+    <div class="messageTime">${formatTime(timestamp)}</div>
+  `;
+  
+  area.appendChild(wrapper);
+  area.scrollTop = area.scrollHeight;
+}
 
-    /**
-     * 发送消息
-     */
-    function sendMessage() {
-      const text = messageInput.value.trim();
-      if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+function showTypingIndicator() {
+  if (isTyping) return;
+  isTyping = true;
+  
+  const area = document.getElementById('messagesArea');
+  const indicator = document.createElement('div');
+  indicator.className = 'messageWrapper assistant';
+  indicator.id = 'typingIndicator';
+  indicator.innerHTML = `
+    <div class="typingIndicator">
+      <span class="typingDot"></span>
+      <span class="typingDot"></span>
+      <span class="typingDot"></span>
+    </div>
+  `;
+  area.appendChild(indicator);
+  area.scrollTop = area.scrollHeight;
+}
 
-      // 添加用户消息
-      addMessage(text, 'user');
+function removeTypingIndicator() {
+  isTyping = false;
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
 
-      // 显示打字指示器
-      showTypingIndicator();
+function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const text = input.value.trim();
+  if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
 
-      // 发送到服务器
-      ws.send(JSON.stringify({
-        type: 'chat',
-        text: text,
-        deviceId: deviceId,
-        timestamp: Date.now()
-      }));
+  addMessage(text, 'user', Date.now());
+  showTypingIndicator();
 
-      // 清空输入框
-      messageInput.value = '';
-      messageInput.focus();
-    }
+  ws.send(JSON.stringify({
+    type: 'chat',
+    text: text,
+    deviceId: deviceId,
+    timestamp: Date.now()
+  }));
 
-    /**
-     * 格式化时间
-     */
-    function formatTime(timestamp) {
-      const date = new Date(timestamp);
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      return `${hours}:${minutes}`;
-    }
+  input.value = '';
+  input.style.height = 'auto';
+  input.focus();
+}
 
-    /**
-     * 滚动到底部
-     */
-    function scrollToBottom() {
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+function sendQuickMessage(text) {
+  document.getElementById('messageInput').value = text;
+  sendMessage();
+}
 
-    // ==================== 事件绑定 ====================
+function handleKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
 
-    sendBtn.addEventListener('click', sendMessage);
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
 
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
+function formatTime(ts) {
+  const d = new Date(ts);
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
 
-    // ==================== 初始化 ====================
+function clearChat() {
+  const area = document.getElementById('messagesArea');
+  area.innerHTML = '';
+  messageCount = 0;
+  addMessage('对话已清空。有什么想聊的吗？随时告诉我～ 😊', 'assistant', Date.now());
+}
+
+// ==================== Tab切换 ====================
+function switchTab(tabName) {
+  document.querySelectorAll('.navItem').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+  
+  const titles = {
+    chat: '智能对话',
+    emotion: '情绪追踪',
+    knowledge: '知识库',
+    care: '关怀推送',
+    profile: '我的档案'
+  };
+  
+  document.getElementById('currentTabTitle').textContent = titles[tabName] || '智能对话';
+}
+
+function switchPanelTab(tab) {
+  document.querySelectorAll('.panelTab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  document.getElementById('overviewView').style.display = tab === 'overview' ? 'block' : 'none';
+  document.getElementById('trendsView').style.display = tab === 'trends' ? 'block' : 'none';
+  document.getElementById('tipsView').style.display = tab === 'tips' ? 'block' : 'none';
+  
+  if (tab === 'trends') updateTrendChart();
+}
+
+// ==================== 统计数据更新 ====================
+function updateStats() {
+  document.getElementById('totalChats').textContent = messageCount;
+  
+  // 模拟数据（实际应该从API获取）
+  const moodScore = (Math.random() * 40 + 60).toFixed(0);
+  document.getElementById('avgMood').textContent = moodScore > 70 ? '😊' : moodScore > 40 ? '😐' : '😔';
+  document.getElementById('activeDays').textContent = Math.min(messageCount, 7);
+  document.getElementById('crisisCount').textContent = Math.random() > 0.8 ? '1' : '0';
+  
+  // 更新幸福感分数
+  const wellbeing = Math.round((moodScore / 100) * 100);
+  animateValue('wellbeingScore', wellbeing);
+  document.getElementById('wellnessBarFill').style.width = wellbeing + '%';
+}
+
+function animateValue(elementId, targetValue) {
+  const el = document.getElementById(elementId);
+  const start = parseInt(el.textContent) || 0;
+  const duration = 1000;
+  const startTime = performance.now();
+  
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const current = Math.round(start + (targetValue - start) * progress);
+    el.textContent = current;
     
-    // 欢迎消息
-    addMessage(
-      '欢迎来到**心晴**！🌟\n\n我是你的心理健康陪伴助手，在这里你可以：\n\n• 📝 分享你的情绪和感受\n• 💬 倾诉你的烦恼和压力\n• 🧘 学习放松和减压技巧\n• 💙 获得温暖的理解和支持\n\n无论你想聊什么，我都在这里倾听你～',
-      'assistant',
-      Date.now()
-    );
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  
+  requestAnimationFrame(update);
+}
 
-    // 连接WebSocket
-    connect();
+// ==================== 趋势图更新 ====================
+function updateTrendChart() {
+  const container = document.getElementById('detailTrendChart');
+  const days = parseInt(document.getElementById('trendPeriodSelect').value) || 7;
+  
+  let html = '';
+  for (let i = 0; i < days; i++) {
+    const height = 30 + Math.random() * 60;
+    const date = new Date();
+    date.setDate(date.getDate() - (days - 1 - i));
+    const label = `${date.getMonth()+1}/${date.getDate()}`;
+    html += `<div class="chartBar" style="height: ${height}%" title="${label}: ${Math.round(height)}分"></div>`;
+  }
+  container.innerHTML = html;
+}
 
-    // 聚焦输入框
-    setTimeout(() => {
-      messageInput.focus();
-    }, 500);
+// ==================== 推送消息 ====================
+function addPushMessage(msg) {
+  const list = document.getElementById('pushMessagesList');
+  
+  // 移除空状态提示
+  if (list.querySelector('p')) {
+    list.innerHTML = '';
+  }
+  
+  const typeLabels = {
+    morning: '☀️ 早安问候',
+    evening: '🌙 晚安关怀',
+    emotion_check: '💜 情绪检查',
+    study_reminder: '📚 学习提醒',
+    crisis_alert: '🚨 危机预警'
+  };
+  
+  const div = document.createElement('div');
+  div.className = 'pushMessage';
+  div.innerHTML = `
+    <div class="pushType">${typeLabels[msg.type] || '📌 提醒'}</div>
+    <div class="pushContent">${msg.content.slice(0, 150)}${msg.content.length > 150 ? '...' : ''}</div>
+    <div class="pushTime">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+  `;
+  
+  list.insertBefore(div, list.firstChild);
+  
+  // 保持最多5条
+  while (list.children.length > 5) {
+    list.removeChild(list.lastChild);
+  }
+}
 
-    console.log('');
-    console.log('╔══════════════════════════════════════╗');
-    console.log('║       心晴 - 心理健康陪伴助手         ║');
-    console.log('║                                      ║');
-    console.log(`║  设备ID: ${deviceId.padEnd(28)}║`);
-    console.log('╚══════════════════════════════════════╝');
-    console.log('');
-  </script>
+// ==================== 主题切换 ====================
+let darkMode = false;
+function toggleTheme() {
+  darkMode = !darkMode;
+  document.body.style.filter = darkMode ? 'invert(0.9) hue-rotate(180deg)' : 'none';
+}
+
+// ==================== 侧边栏切换（移动端）====================
+function toggleSidebar() {
+  const sidebar = document.getElementById('leftSidebar');
+  sidebar.classList.toggle('mobileOpen');
+}
+
+// ==================== 初始化 ====================
+document.addEventListener('DOMContentLoaded', () => {
+  deviceId = getOrCreateDeviceId();
+  connect();
+
+  // 绑定回车键
+  document.getElementById('messageInput').addEventListener('keydown', handleKeyDown);
+  
+  // 初始统计
+  updateStats();
+  
+  console.log('');
+  console.log('╔══════════════════════════════════════╗');
+  console.log('║     🌸 心晴 v3.0 - 完整版               ║');
+  console.log(`║  Device: ${deviceId.padEnd(32)}║`);
+  console.log('╚══════════════════════════════════════╝');
+
+  // 模拟一些初始数据展示
+  setTimeout(() => {
+    animateValue('wellbeingScore', 72);
+    document.getElementById('wellnessBarFill').style.width = '72%';
+  }, 500);
+});
+
+</script>
+
 </body>
 </html>

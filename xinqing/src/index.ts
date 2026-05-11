@@ -360,13 +360,7 @@ app.get('/health', (req, res) => {
 // 注册情绪可视化API路由
 app.use(emotionVisualization.getRouter());
 
-// 静态文件服务（提供前端页面）
-import { fileURLToPath } from 'url';
-import path from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+// 静态文件服务（提供前端页面）- 使用已声明的 __dirname
 app.use(express.static(path.join(__dirname, '../public')));
 
 // 根路径重定向到index.html

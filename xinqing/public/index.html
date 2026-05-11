@@ -627,35 +627,72 @@
   </div>
   <div class="drawer-body">
 
+    <!-- 幸福感评分 -->
     <div class="wellbeing">
       <div class="wellbeing-score" id="wbScore">--</div>
       <div class="wellbeing-label">综合幸福感指数</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--text-secondary)" id="wbDesc">正在加载数据...</div>
       <div class="wellbeing-bar"><div class="wellbeing-fill" id="wbFill" style="width:0%"></div></div>
     </div>
 
+    <!-- 当前情绪状态 -->
+    <div id="currentMoodCard" style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:16px;display:none">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px"><i class="fas fa-heart-pulse" style="color:var(--primary)"></i> 当前状态</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary)">
+        <span>主要情绪：<strong id="cmEmotion" style="color:var(--text)">--</strong></span>
+        <span>强度：<strong id="cmIntensity" style="color:var(--text)">--</strong>/10</span>
+      </div>
+    </div>
+
+    <!-- 统计数据 -->
     <div class="stats">
       <div class="stat"><div class="stat-val" id="stChats">0</div><div class="stat-lbl">对话次数</div></div>
       <div class="stat"><div class="stat-val" id="stMood">--</div><div class="stat-lbl">平均心情</div></div>
-      <div class="stat"><div class="stat-val" id="stDays">0</div><div class="stat-lbl">活跃天数</div></div>
-      <div class="stat"><div class="stat-val" id="stCrisis">0</div><div class="stat-lbl">预警次数</div></div>
+      <div class="stat"><div class="stat-val" id="stDays">0</div><div class="stat-lbl">预警次数</div></div>
+      <div class="stat"><div class="stat-val" id="stCrisis">0</div><div class="stat-lbl">关注次数</div></div>
     </div>
 
+    <!-- 趋势图 + 方向标签 -->
     <div class="mini-chart">
-      <div class="chart-title">近7天情绪变化</div>
-      <div class="bars" id="bars">
-        <div class="bar" style="height:60%"></div>
-        <div class="bar" style="height:75%"></div>
-        <div class="bar" style="height:45%"></div>
-        <div class="bar" style="height:68%"></div>
-        <div class="bar" style="height:82%"></div>
-        <div class="bar" style="height:58%"></div>
-        <div class="bar" style="height:74%"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span class="chart-title" style="margin:0">近7天情绪趋势</span>
+        <span class="tag" id="trendBadge" style="font-size:11px;padding:4px 10px">加载中</span>
       </div>
-      <div class="bar-labels"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+      <div class="bars" id="bars">
+        <div class="bar" style="height:50%;background:#e0e0e0"></div>
+        <div class="bar" style="height:50%;background:#e0e0e0"></div>
+        <div class="bar" style="height:50%;background:#e0e0e0"></div>
+        <div class="bar" style="height:50%;background:#e0e0e0"></div>
+        <div class="bar" style="height:50%;background:#e0e0e0"></div>
+        <div class="bar" style="height:50%;background:#e0e0e0"></div>
+        <div class="bar" style="height:50%;background:#e0e0e0"></div>
+      </div>
+      <div class="bar-labels" id="barLabels"><span>--</span><span>--</span><span>--</span><span>--</span><span>--</span><span>--</span><span>--</span></div>
     </div>
 
-    <p style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px">
-      <i class="fas fa-lightbulb" style="color:#fcc419"></i> 推荐话题
+    <!-- 情绪分布 -->
+    <div id="distSection" style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:16px;display:none">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px"><i class="fas fa-chart-pie" style="color:var(--primary)"></i> 情绪分布</div>
+      <div id="distList" style="font-size:12px"></div>
+    </div>
+
+    <!-- 安全状态 -->
+    <div id="safetyCard" style="border-radius:12px;padding:14px;margin-bottom:16px;border-left:4px solid var(--success)">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px"><i class="fas fa-shield-alt" style="color:var(--success)"></i> 安全评估</div>
+      <div id="safetyText" style="font-size:12px;color:var(--text-secondary)">加载中...</div>
+    </div>
+
+    <!-- AI建议（来自后端） -->
+    <div id="recSection" style="display:none">
+      <p style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px">
+        <i class="fas fa-lightbulb" style="color:#fcc419"></i> AI 建议
+      </p>
+      <div id="aiRecList" class="rec-list"></div>
+    </div>
+
+    <!-- 推荐话题（固定） -->
+    <p style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;margin-top:16px">
+      <i class="fas fa-book-open" style="color:var(--primary)"></i> 知识库推荐
     </p>
     <div class="rec-list">
       <div class="rec-item" onclick="quick('教我呼吸放松法')">
@@ -678,10 +715,15 @@
         <div class="rec-icon">🤝</div>
         <div class="rec-info"><div class="rec-title">非暴力沟通</div><div class="rec-desc">化解冲突的有效方法</div></div>
       </div>
-      <div class="rec-item" onclick="quick('我感到很低落')">
-        <div class="rec-icon">💜</div>
-        <div class="rec-info"><div class="rec-title">抑郁情绪应对</div><div class="rec-desc">识别信号并寻求支持</div></div>
+      <div class="rec-item" onclick="quick('考试焦虑怎么办')">
+        <div class="rec-icon">�</div>
+        <div class="rec-info"><div class="rec-title">考试焦虑应对</div><div class="rec-desc">认知重构从容应考</div></div>
       </div>
+    </div>
+
+    <!-- 数据更新时间 -->
+    <div style="text-align:center;margin-top:16px;font-size:11px;color:#b2bec3" id="lastUpdate">
+      数据更新时间：--
     </div>
 
   </div>
@@ -690,6 +732,7 @@
 <script>
 const DK='xinqing-device-id';
 let ws=null,did=null,typing=false,count=0;
+let dashboardData = null;
 
 function getDid(){
   let d=localStorage.getItem(DK);
@@ -697,7 +740,190 @@ function getDid(){
   return d;
 }
 
-function connect(){
+// ==================== API调用 ====================
+const API_BASE = '';
+
+async function apiGet(url) {
+  try {
+    const r = await fetch(API_BASE + url);
+    const j = await r.json();
+    if (j.success !== false) return j.data || j;
+    return null;
+  } catch(e) {
+    console.warn('[API] 请求失败:', url, e.message);
+    return null;
+  }
+}
+
+async function fetchDashboard() {
+  const data = await apiGet(`/api/emotion/dashboard/${did}`);
+  if (data) {
+    dashboardData = data;
+    renderDashboard(data);
+  }
+}
+
+async function fetchTrend(days=7) {
+  return await apiGet(`/api/emotion/trend/${did}?days=${days}`);
+}
+
+async function fetchReport(period='week') {
+  return await apiGet(`/api/emotion/report/${did}?period=${period}`);
+}
+
+async function fetchDistribution(days=30) {
+  return await apiGet(`/api/emotion/distribution/${did}?days=${days}`);
+}
+
+async function fetchCrisisStats(days=30) {
+  return await apiGet(`/api/emotion/crisis-stats/${did}?days=${days}`);
+}
+
+// ==================== 渲染真实数据 ====================
+function renderDashboard(data) {
+  console.log('[仪表盘] 收到数据:', data);
+
+  // 1. 幸福感评分
+  if (data.wellbeingScore !== undefined) {
+    const score = Math.round(data.wellbeingScore);
+    anim('wbScore', score);
+    document.getElementById('wbFill').style.width = score + '%';
+    
+    // 描述文字
+    let desc = '';
+    if (score >= 80) desc = '状态很好！继续保持 💪';
+    else if (score >= 60) desc = '整体不错，可以更好 🌟';
+    else if (score >= 40) desc = '有些波动，多关注自己 💙';
+    else desc = '建议寻求支持，我在这里陪你';
+    document.getElementById('wbDesc').textContent = desc;
+  }
+
+  // 2. 当前情绪状态
+  if (data.currentMood) {
+    document.getElementById('currentMoodCard').style.display = 'block';
+    
+    const mood = data.currentMood;
+    document.getElementById('cmEmotion').textContent = mood.primaryEmotion || '平静';
+    document.getElementById('cmIntensity').textContent = (mood.intensity || 0).toFixed(1);
+    
+    // 对话次数
+    document.getElementById('stChats').textContent = count;
+    
+    // 平均心情表情
+    const score = mood.score || 0;
+    document.getElementById('stMood').textContent = score > 2 ? '😊' : score > -2 ? '😐' : '😔';
+  }
+
+  // 3. 安全状态
+  if (data.safetyStatus) {
+    const safety = data.safetyStatus;
+    document.getElementById('stDays').textContent = safety.recentCrisisCount || 0;
+    document.getElementById('stCrisis').textContent = safety.recentWarnings || 0;
+
+    const card = document.getElementById('safetyCard');
+    const textEl = document.getElementById('safetyText');
+    
+    if (safety.level === 'attention_needed') {
+      card.style.borderLeftColor = '#fcc419';
+      textEl.innerHTML = `<span style="color:#e67700">⚠️ 需要关注</span> - 近期检测到 ${safety.recentWarnings} 次情绪预警，请注意休息和自我关怀`;
+    } else {
+      card.style.borderLeftColor = '#51cf66';
+      textEl.innerHTML = '<span style="color:#2b8a3e">✅ 状态良好</span> - 近期未检测到明显风险信号，继续保持';
+    }
+  }
+
+  // 4. 趋势图 - 使用真实趋势数据
+  if (data.weeklyTrend && data.weeklyTrend.dataPoints && data.weeklyTrend.dataPoints.length > 0) {
+    renderTrendBars(data.weeklyTrend.dataPoints);
+
+    // 趋势方向标签
+    const trendBadge = document.getElementById('trendBadge');
+    if (trendBadge && data.weeklyTrend.trend) {
+      const t = data.weeklyTrend.trend;
+      if (t === 'improving') {
+        trendBadge.textContent = '好转 📈';
+        trendBadge.style.background = '#d3f9d8';
+        trendBadge.style.color = '#2b8a3e';
+      } else if (t === 'declining') {
+        trendBadge.textContent = '下滑 📉';
+        trendBadge.style.background = '#ffe3e3';
+        trendBadge.style.color = '#c92a2a';
+      } else {
+        trendBadge.textContent = '稳定 ➡️';
+        trendBadge.style.background = '#f1f3f5';
+        trendBadge.style.color = '#495057';
+      }
+    }
+  }
+
+  // 5. 情绪分布
+  if (data.emotionDistribution && data.emotionDistribution.length > 0) {
+    document.getElementById('distSection').style.display = 'block';
+    const distList = document.getElementById('distList');
+    const total = data.emotionDistribution.reduce((s, d) => s + d.value, 0) || 1;
+    
+    distList.innerHTML = data.emotionDistribution.slice(0, 6).map(d => {
+      const pct = ((d.value / total) * 100).toFixed(0);
+      return `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="width:60px;flex-shrink:0">${d.name}</span>
+          <div style="flex:1;height:6px;background:#e9ecef;border-radius:3px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--primary),#a5b4fc);border-radius:3px"></div>
+          </div>
+          <span style="width:32px;text-align:right;color:var(--text-secondary);flex-shrink:0">${pct}%</span>
+        </div>`;
+    }).join('');
+  }
+
+  // 6. AI建议
+  if (data.recommendations && data.recommendations.length > 0) {
+    document.getElementById('recSection').style.display = 'block';
+    const aiRecList = document.getElementById('aiRecList');
+    
+    aiRecList.innerHTML = data.recommendations.map((rec, i) => `
+      <div class="rec-item" onclick="quick('${rec.replace(/[']/g, '')}')">
+        <div class="rec-icon">${['💡','🎯','🌟','✨'][i] || '💡'}</div>
+        <div class="rec-info"><div class="rec-title">建议 ${i+1}</div><div class="rec-desc">${rec.slice(0,40)}${rec.length>40?'...':''}</div></div>
+      </div>`).join('');
+  }
+
+  // 7. 更新时间
+  if (data.generatedAt) {
+    const d = new Date(data.generatedAt);
+    document.getElementById('lastUpdate').textContent = 
+      `数据更新时间：${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+  }
+}
+
+function renderTrendBars(dataPoints) {
+  const container = document.getElementById('bars');
+  if (!container || !dataPoints || dataPoints.length === 0) return;
+
+  // 找到最大最小值用于归一化
+  let minScore = Infinity, maxScore = -Infinity;
+  dataPoints.forEach(p => {
+    if (p.score < minScore) minScore = p.score;
+    if (p.score > maxScore) maxScore = p.score;
+  });
+  const range = maxScore - minScore || 1;
+
+  container.innerHTML = dataPoints.map((p, i) => {
+    const normalizedHeight = ((p.score - minScore) / range) * 70 + 10; // 10-80px范围
+    return `<div class="bar" style="height:${normalizedHeight}%" title="${p.date}: ${p.score.toFixed(1)}"></div>`;
+  }).join('');
+
+  // 更新日期标签
+  const labelsEl = document.getElementById('barLabels');
+  if (labelsEl && dataPoints.length > 0) {
+    const days = ['日','一','二','三','四','五','六'];
+    labelsEl.innerHTML = dataPoints.map(p => {
+      const d = new Date(p.date);
+      return `<span>${days[d.getDay()]}</span>`;
+    }).join('');
+  }
+}
+
+// ==================== WebSocket连接 ====================
   const p=location.protocol==='https:'?'wss:':'ws:';
   try{
     ws=new WebSocket(`${p}//${location.host}`);
@@ -710,7 +936,7 @@ function connect(){
       if(m.type==='chat'&&m.text){
         removeTyping();
         addMsg(m.text,'bot',m.timestamp,m.text.includes('🚨')||m.text.includes('危机'));
-        count++;updateStats();
+        count++;refreshAfterMessage();
       }else if(m.type==='push_care'){/* 可扩展 */}
     };
     ws.onclose=()=>{
@@ -756,23 +982,26 @@ function resize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHei
 function fmt(t){const d=new Date(t);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
 function clearChat(){document.getElementById('msgs').innerHTML='';count=0;addMsg('对话已清空。有什么想聊的随时告诉我～ 😊','bot',Date.now());}
 
-function openDrawer(){document.getElementById('overlay').classList.add('show');document.getElementById('drawer').classList.add('open');updateStats();}
+function openDrawer(){
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('open');
+  fetchDashboard();
+}
 function closeDrawer(){document.getElementById('overlay').classList.remove('show');document.getElementById('drawer').classList.remove('open');}
 
-function updateStats(){
-  document.getElementById('stChats').textContent=count;
-  const s=Math.round(Math.random()*30+65);
-  document.getElementById('stMood').textContent=s>72?'😊':s>42?'😐':'😔';
-  document.getElementById('stDays').textContent=Math.min(count,7);
-  document.getElementById('stCrisis').textContent=Math.random()>.85?'1':'0';
-
-  const wb=Math.round(s);
-  const el=document.getElementById('wbScore');
-  const start=parseInt(el.textContent)||0;
-  anim('wbScore',start,wb);
-  document.getElementById('wbFill').style.width=wb+'%';
+// ==================== 真实数据更新 ====================
+async function updateStats() {
+  await fetchDashboard();
 }
 
+// 每次发消息后刷新数据
+async function refreshAfterMessage() {
+  document.getElementById('stChats').textContent = count;
+  // 延迟一点让后端处理完情绪分析
+  setTimeout(() => fetchDashboard(), 500);
+}
+
+// ==================== 动画工具 ====================
 function anim(id,to){
   const el=document.getElementById(id);
   const from=parseInt(el.textContent)||0;
@@ -786,9 +1015,22 @@ function anim(id,to){
   requestAnimationFrame(step);
 }
 
+// ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded',()=>{
   did=getDid();
   connect();
+
+  // 首次加载时获取仪表盘数据
+  setTimeout(() => {
+    if (did) fetchDashboard();
+  }, 1000);
+
+  console.log('');
+  console.log('╔════════════════════════════════════╗');
+  console.log('║   🌸 心晴 v3.2 - 真实数据版        ║');
+  console.log(`║  Device: ${did.padEnd(28)}║`);
+  console.log('╚════════════════════════════════════╝');
+});
   document.getElementById('input').addEventListener('keydown',onKey);
   setTimeout(()=>{anim('wbScore',72);document.getElementById('wbFill').style.width='72%';},400);
 });

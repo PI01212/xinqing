@@ -244,16 +244,30 @@ export class EmotionVisualizationService {
           (crisisStats.crisisCount === 0 ? 20 : Math.max(0, 20 - crisisStats.crisisCount * 5)) // 安全加分 (0-20分)
         ));
 
+        // 获取最新单条分析结果（用于实时当前状态）
+        const latestHistory = this.emotionAnalyzer.getHistory(userId, 1);
+        const latestAnalysis = latestHistory.length > 0 ? latestHistory[latestHistory.length - 1].analysis : null;
+
         res.json({
           success: true,
           data: {
-            currentMood: {
-              score: trend.dataPoints.length > 0 ? trend.dataPoints[trend.dataPoints.length - 1].score : 0,
-              sentiment: trend.dataPoints.length > 0 ? 
-                (trend.dataPoints[trend.dataPoints.length - 1].score > 0.5 ? 'positive' : 
-                 trend.dataPoints[trend.dataPoints.length - 1].score < -0.5 ? 'negative' : 'neutral') : 'neutral',
-              primaryEmotion: trend.dominantEmotions[0] || '平静',
-              intensity: trend.averageIntensity
+            // 当前情绪状态 - 使用最新单条分析结果（实时）
+            currentMood: latestAnalysis ? {
+              score: Math.round(latestAnalysis.score * 100) / 100,
+              sentiment: latestAnalysis.sentiment,
+              primaryEmotion: latestAnalysis.primaryEmotion || '平静',
+              intensity: Math.round(latestAnalysis.intensity * 10) / 10,
+              crisisLevel: latestAnalysis.crisisLevel,
+              needsAttention: latestAnalysis.needsAttention,
+              keywords: latestAnalysis.keywords
+            } : {
+              score: 0,
+              sentiment: 'neutral',
+              primaryEmotion: '暂无数据',
+              intensity: 0,
+              crisisLevel: 'safe',
+              needsAttention: false,
+              keywords: []
             },
             weeklyTrend: {
               direction: trend.trend,

@@ -636,12 +636,13 @@
     </div>
 
     <!-- 当前情绪状态 -->
-    <div id="currentMoodCard" style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:16px;display:none">
+    <div id="currentMoodCard" style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:16px;display:none;border-left:4px solid var(--success)">
       <div style="font-size:13px;font-weight:600;margin-bottom:8px"><i class="fas fa-heart-pulse" style="color:var(--primary)"></i> 当前状态</div>
       <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary)">
         <span>主要情绪：<strong id="cmEmotion" style="color:var(--text)">--</strong></span>
         <span>强度：<strong id="cmIntensity" style="color:var(--text)">--</strong>/10</span>
       </div>
+      <div id="keywordsDisplay" style="margin-top:8px;display:none"></div>
     </div>
 
     <!-- 统计数据 -->
@@ -812,7 +813,6 @@ function renderDashboard(data) {
     anim('wbScore', score);
     document.getElementById('wbFill').style.width = score + '%';
     
-    // 描述文字
     let desc = '';
     if (score >= 80) desc = '状态很好！继续保持 💪';
     else if (score >= 60) desc = '整体不错，可以更好 🌟';
@@ -821,20 +821,56 @@ function renderDashboard(data) {
     document.getElementById('wbDesc').textContent = desc;
   }
 
-  // 2. 当前情绪状态
-  if (data.currentMood) {
+  // 2. 当前情绪状态（核心！直接用最新分析结果）
+  if (data.currentMood && data.currentMood.primaryEmotion !== '暂无数据') {
     document.getElementById('currentMoodCard').style.display = 'block';
     
     const mood = data.currentMood;
-    document.getElementById('cmEmotion').textContent = mood.primaryEmotion || '平静';
-    document.getElementById('cmIntensity').textContent = (mood.intensity || 0).toFixed(1);
+    
+    // 主要情绪
+    document.getElementById('cmEmotion').textContent = mood.primaryEmotion;
+    
+    // 强度
+    document.getElementById('cmIntensity').textContent = mood.intensity;
+    
+    // 危机级别可视化
+    const card = document.getElementById('currentMoodCard');
+    if (mood.crisisLevel === 'urgent') {
+      card.style.borderLeftColor = '#ff4444';
+      card.style.background = '#fff5f5';
+    } else if (mood.crisisLevel === 'warning') {
+      card.style.borderLeftColor = '#fcc419';
+      card.style.background = '#fffbeb';
+    } else if (mood.crisisLevel === 'concern') {
+      card.style.borderLeftColor = '#74c0fc';
+      card.style.background = '#e7f5ff';
+    } else {
+      card.style.borderLeftColor = '#51cf66';
+      card.style.background = '#f6ffed';
+    }
+    
+    // 显示关键词
+    if (mood.keywords && mood.keywords.length > 0) {
+      const kwEl = document.getElementById('keywordsDisplay');
+      if (kwEl) {
+        kwEl.innerHTML = '<span style="font-size:11px;color:var(--text-secondary)">关键词: </span>' + 
+          mood.keywords.slice(0, 3).map(k => `<span style="background:var(--primary-light);padding:2px 8px;border-radius:10px;font-size:11px;margin-right:4px">${k}</span>`).join('');
+        kwEl.style.display = 'block';
+      }
+    }
     
     // 对话次数
     document.getElementById('stChats').textContent = count;
     
-    // 平均心情表情
+    // 平均心情表情（基于最新分数）
     const score = mood.score || 0;
     document.getElementById('stMood').textContent = score > 2 ? '😊' : score > -2 ? '😐' : '😔';
+
+  } else {
+    // 无数据显示
+    document.getElementById('currentMoodCard').style.display = 'none';
+    document.getElementById('stChats').textContent = count;
+    document.getElementById('stMood').textContent = '--';
   }
 
   // 3. 安全状态

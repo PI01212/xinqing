@@ -7,7 +7,7 @@
  * - 支持前端图表渲染
  */
 
-import { EmotionAnalyzer, EmotionAnalysisResult } from '../emotion/emotion-analyzer.js';
+import { EmotionAnalyzer, EmotionAnalysisResult, createEmotionAnalyzer } from '../emotion/emotion-analyzer.js';
 import express from 'express';
 
 export interface EmotionReport {
